@@ -242,6 +242,8 @@
             .paste-input { width: 90%; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
     <canvas class="stars-layer" id="stars1"></canvas>
@@ -362,13 +364,27 @@
     let playerName = '';
     let players = [];
 
-    // ===== MOCK QUIZ DATA =====
-    const mockQuizzes = {
-        'ABC123': { title:'Espaco e Astronomia', cat:'Ciencias', diff:'Medio', questions:10, creator:'Prof. Silva' },
-        'K7B3NP': { title:'Capitais do Mundo', cat:'Geografia', diff:'Facil', questions:15, creator:'Prof. Ana' },
-        'XYZ789': { title:'Historia do Brasil', cat:'Historia', diff:'Dificil', questions:12, creator:'Prof. Carlos' },
-        'DEMO':    { title:'Quiz de Teste', cat:'Tecnologia', diff:'Facil', questions:5, creator:'Professor' },
-    };
+    // ===== MOCK QUIZ DATA (replaced by Supabase) =====
+    let foundQuiz = null;
+
+    // Load supabase config
+    (async () => {
+        // Check if code was passed via URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCode = urlParams.get('code');
+        if (urlCode) {
+            document.getElementById('pasteCode').value = urlCode;
+            document.getElementById('pasteCode').dispatchEvent(new Event('input'));
+        }
+
+        // Pre-fill name if logged in
+        if (typeof getUser === 'function') {
+            const { user, profile } = await getUser();
+            if (profile) {
+                document.getElementById('nameInput').value = profile.name || '';
+            }
+        }
+    })();
 
     // ===== SCREENS =====
     function show(id) {
@@ -446,27 +462,37 @@
 
     function tryEnter(code) {
         enteredCode = code;
-        // Check if quiz exists (mock)
-        const quiz = mockQuizzes[code];
-        if (!quiz) {
-            showError('Quiz nao encontrado. Verifique o codigo e tente novamente.');
-            boxes.forEach(b => b.classList.add('err'));
+        // Check if supabase config is loaded
+        if (typeof getQuizByCode !== 'function') {
+            showError('Carregando... tente novamente em instantes.');
             return;
         }
 
-        // Show quiz info
-        const info = document.getElementById('quizInfo');
-        info.innerHTML = `
-            <h3>${quiz.title}</h3>
-            <div class="meta">
-                <span class="tag cat">${quiz.cat}</span>
-                <span class="tag diff">${quiz.diff}</span>
-                <span class="tag count">${quiz.questions} perguntas</span>
-            </div>
-        `;
+        // Search in Supabase
+        getQuizByCode(code).then(({ data: quiz, error }) => {
+            if (error || !quiz) {
+                showError('Quiz nao encontrado. Verifique o codigo e tente novamente.');
+                boxes.forEach(b => b.classList.add('err'));
+                return;
+            }
 
-        show('Name');
-        setTimeout(() => document.getElementById('nameInput').focus(), 200);
+            foundQuiz = quiz;
+            const qCount = quiz.questions?.[0]?.count || 0;
+
+            // Show quiz info
+            const info = document.getElementById('quizInfo');
+            info.innerHTML = `
+                <h3>${esc(quiz.title)}</h3>
+                <div class="meta">
+                    <span class="tag cat">${esc(quiz.category)}</span>
+                    <span class="tag diff">${quiz.difficulty}</span>
+                    <span class="tag count">${qCount} perguntas</span>
+                </div>
+            `;
+
+            show('Name');
+            setTimeout(() => document.getElementById('nameInput').focus(), 200);
+        });
     }
 
     function showError(msg) {
@@ -501,11 +527,10 @@
     function enterWaiting() {
         show('Loading');
 
-        // Simulate connection
-        setTimeout(() => {
-            const quiz = mockQuizzes[enteredCode] || { title: 'Quiz ' + enteredCode };
+        setTimeout(async () => {
+            const quizTitle = foundQuiz?.title || 'Quiz ' + enteredCode;
 
-            document.getElementById('waitingQuizTitle').textContent = quiz.title;
+            document.getElementById('waitingQuizTitle').textContent = quizTitle;
 
             const color = avatarColors[Math.floor(Math.random() * avatarColors.length)];
             const initial = playerName.charAt(0).toUpperCase();
@@ -516,10 +541,48 @@
             players = [{ name: playerName, color, initial }];
             renderPlayers();
 
-            show('Waiting');
+            // Join session in DB
+            if (foundQuiz && typeof joinQuizSession === 'function') {
+                try {
+                    const { data: session } = await joinQuizSession(foundQuiz.id, playerName);
+                    if (session) {
+                        window._sessionId = session.id;
+                    }
 
-            // Simulate other players joining
-            simulatePlayers();
+                    // Load existing players
+                    const { data: existingPlayers } = await getSessionPlayers(foundQuiz.id);
+                    if (existingPlayers) {
+                        players = existingPlayers.map(p => ({
+                            name: p.student_name,
+                            color: avatarColors[Math.floor(Math.random() * avatarColors.length)],
+                            initial: p.student_name.charAt(0).toUpperCase()
+                        }));
+                        renderPlayers();
+                    }
+
+                    // Subscribe to realtime updates
+                    window._sessionChannel = subscribeToSession(foundQuiz.id, (payload) => {
+                        if (payload.eventType === 'INSERT') {
+                            const p = payload.new;
+                            if (!players.find(x => x.name === p.student_name)) {
+                                players.push({
+                                    name: p.student_name,
+                                    color: avatarColors[Math.floor(Math.random() * avatarColors.length)],
+                                    initial: p.student_name.charAt(0).toUpperCase()
+                                });
+                                renderPlayers();
+                            }
+                        } else if (payload.eventType === 'DELETE') {
+                            players = players.filter(x => x.name !== payload.old?.student_name);
+                            renderPlayers();
+                        }
+                    });
+                } catch (err) {
+                    console.error('Session error:', err);
+                }
+            }
+
+            show('Waiting');
         }, 1800);
     }
 
@@ -574,10 +637,18 @@
     });
 
     // ===== LEAVE =====
-    document.getElementById('leaveBtn').addEventListener('click', () => {
+    document.getElementById('leaveBtn').addEventListener('click', async () => {
+        // Leave session in DB
+        if (window._sessionId && typeof leaveQuizSession === 'function') {
+            await leaveQuizSession(window._sessionId);
+        }
+        if (window._sessionChannel && typeof unsubscribeFromSession === 'function') {
+            unsubscribeFromSession(window._sessionChannel);
+        }
         show('Entry');
         playerName = '';
         enteredCode = '';
+        foundQuiz = null;
         nameInput.value = '';
         boxes.forEach(b => { b.value = ''; b.classList.remove('filled'); });
         pasteInput.value = '';

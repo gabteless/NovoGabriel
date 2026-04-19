@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNIVERSUS — Quiz</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js';"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -248,6 +250,12 @@
     <div class="settings-overlay" id="settingsOverlay"></div>
     <div class="settings-panel" id="settingsPanel">
         <h3>Configuracoes <button class="cb" id="closeSettings">&times;</button></h3>
+        <div class="si" style="border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;margin-bottom:8px;">
+            <div>
+                <label style="font-weight:600;color:#e2e8f0;" id="settingsUserName">Carregando...</label>
+                <div style="font-size:0.7rem;color:#a78bfa;margin-top:2px;" id="settingsUserRole">Aluno</div>
+            </div>
+        </div>
         <div class="si"><label>Sons</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
         <div class="si"><label>Temporizador</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
         <div class="si"><label>Efeitos visuais</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
@@ -255,6 +263,9 @@
             <select style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;border-radius:6px;padding:4px 8px;font-size:0.8rem;">
                 <option>Facil</option><option>Medio</option><option>Dificil</option>
             </select>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
+            <button id="logoutBtn" style="width:100%;padding:10px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;transition:background 0.3s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">Sair da conta</button>
         </div>
     </div>
 
@@ -286,22 +297,15 @@
         <div class="main-content">
             <div class="panel active" id="panel-search">
                 <div class="search-box"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input type="text" placeholder="Procurar quiz..." id="searchInput"></div>
-                <div class="quiz-grid">
-                    <div class="quiz-card"><span class="cat">Ciencias</span><h4>Espaco e Astronomia</h4><p>Teste seus conhecimentos sobre o universo</p><div class="meta"><span>10 perguntas</span><span>Medio</span></div></div>
-                    <div class="quiz-card"><span class="cat">Geografia</span><h4>Capitais do Mundo</h4><p>Quantas capitais voce conhece?</p><div class="meta"><span>15 perguntas</span><span>Facil</span></div></div>
-                    <div class="quiz-card"><span class="cat">Historia</span><h4>Historia do Brasil</h4><p>Do descobrimento aos dias atuais</p><div class="meta"><span>12 perguntas</span><span>Dificil</span></div></div>
-                    <div class="quiz-card"><span class="cat">Tecnologia</span><h4>Programacao Web</h4><p>HTML, CSS, JavaScript e mais</p><div class="meta"><span>20 perguntas</span><span>Medio</span></div></div>
-                    <div class="quiz-card"><span class="cat">Matematica</span><h4>Algebra Basica</h4><p>Equacoes e expressoes</p><div class="meta"><span>8 perguntas</span><span>Facil</span></div></div>
-                    <div class="quiz-card"><span class="cat">Cultura</span><h4>Filmes e Series</h4><p>Cultura pop e cinematografia</p><div class="meta"><span>10 perguntas</span><span>Facil</span></div></div>
+                <div class="quiz-grid" id="quizGrid">
+                    <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;">Carregando quizzes...</div>
                 </div>
             </div>
             <div class="panel" id="panel-reports">
-                <div style="margin-bottom:25px;"><h2 style="font-size:1.3rem;color:#e2e8f0;">Relatorio de Quizzes</h2></div>
-                <div class="stats-row"><div class="stat-card"><div class="sv">12</div><div class="sl">Quizzes Jogados</div></div><div class="stat-card"><div class="sv">85%</div><div class="sl">Taxa de Acerto</div></div><div class="stat-card"><div class="sv">3</div><div class="sl">Melhor Pontuacao</div></div></div>
-                <table class="rt"><thead><tr><th>Quiz</th><th>Data</th><th>Acertos</th><th>Pontos</th></tr></thead><tbody>
-                    <tr><td>Espaco</td><td>04-05</td><td>9/10</td><td>900</td></tr>
-                    <tr><td>Capitais</td><td>04-04</td><td>12/15</td><td>1200</td></tr>
-                    <tr><td>Historia</td><td>04-03</td><td>8/12</td><td>800</td></tr>
+                <div style="margin-bottom:25px;"><h2 style="font-size:1.3rem;color:#e2e8f0;">Meus Resultados</h2></div>
+                <div class="stats-row" id="statsRow"><div class="stat-card"><div class="sv" id="statPlayed">0</div><div class="sl">Quizzes Jogados</div></div><div class="stat-card"><div class="sv" id="statRate">0%</div><div class="sl">Taxa de Acerto</div></div><div class="stat-card"><div class="sv" id="statBest">0</div><div class="sl">Melhor Pontuacao</div></div></div>
+                <table class="rt"><thead><tr><th>Quiz</th><th>Data</th><th>Acertos</th><th>Pontos</th></tr></thead><tbody id="reportsBody">
+                    <tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Carregando...</td></tr>
                 </tbody></table>
             </div>
             <div class="panel" id="panel-create">
@@ -775,6 +779,9 @@
         localStorage.setItem('uv_char',JSON.stringify(P));
         document.getElementById('charNameSidebar').textContent=n;
         updMinis();
+        if (typeof saveAvatarConfig === 'function') {
+            saveAvatarConfig(P).catch(err => console.log('Avatar save error:', err));
+        }
     }
 
     document.getElementById('openCharCreator').onclick=openModal;
@@ -798,6 +805,97 @@
     const saved=localStorage.getItem('uv_char');
     if(saved)Object.assign(P,JSON.parse(saved));
     document.getElementById('charNameSidebar').textContent=P.name||'Personagem';
+
+    // ===== SUPABASE INTEGRATION =====
+    (async function initPage() {
+        if (typeof requireAuth !== 'function') { console.error('supabase-config.js nao carregou'); return; }
+
+        const { user, profile } = await requireAuth('aluno');
+        if (!user) return;
+
+        document.getElementById('settingsUserName').textContent = profile.name || 'Aluno';
+        document.getElementById('settingsUserRole').textContent = 'Aluno';
+
+        if (profile.avatar_config && Object.keys(profile.avatar_config).length > 0) {
+            Object.assign(P, profile.avatar_config);
+            localStorage.setItem('uv_char', JSON.stringify(P));
+            document.getElementById('charNameSidebar').textContent = P.name || 'Personagem';
+            if (typeof buildAvatar === 'function' && G) { buildAvatar(); }
+            if (typeof updMinis === 'function') { updMinis(); }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await signOut();
+        });
+
+        await loadQuizzes();
+        await loadReports();
+    })();
+
+    function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function loadQuizzes() {
+        const grid = document.getElementById('quizGrid');
+        try {
+            const { data: quizzes, error } = await getActiveQuizzes();
+            if (error) throw error;
+
+            if (!quizzes || quizzes.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;">Nenhum quiz disponivel no momento.</div>';
+                return;
+            }
+
+            grid.innerHTML = quizzes.map(q => {
+                const qCount = q.questions?.[0]?.count || 0;
+                return `<div class="quiz-card" onclick="window.location.href='entrar-quiz.html?code=${q.access_code||''}'" style="cursor:pointer;">
+                    <span class="cat">${esc(q.category)}</span>
+                    <h4>${esc(q.title)}</h4>
+                    <p>${esc(q.description) || 'Sem descricao'}</p>
+                    <div class="meta">
+                        <span>${qCount} perguntas</span>
+                        <span>${q.difficulty}</span>
+                    </div>
+                    ${q.access_code ? '<div style="margin-top:8px;font-size:0.7rem;color:#a78bfa;">Codigo: '+q.access_code+'</div>' : ''}
+                </div>`;
+            }).join('');
+
+            document.getElementById('searchInput').oninput = function() {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.quiz-card').forEach(c => {
+                    c.style.display = c.textContent.toLowerCase().includes(query) ? 'block' : 'none';
+                });
+            };
+        } catch (err) {
+            grid.innerHTML = '<div style="text-align:center;padding:40px;color:#fca5a5;grid-column:1/-1;">Erro ao carregar quizzes</div>';
+            console.error(err);
+        }
+    }
+
+    async function loadReports() {
+        try {
+            const { data: attempts } = await getMyAttempts();
+
+            document.getElementById('statPlayed').textContent = attempts?.length || 0;
+
+            if (attempts && attempts.length > 0) {
+                const avgRate = Math.round(attempts.reduce((acc, a) => acc + (a.total_questions > 0 ? (a.correct_answers / a.total_questions) * 100 : 0), 0) / attempts.length);
+                const bestScore = Math.max(...attempts.map(a => a.score));
+                document.getElementById('statRate').textContent = avgRate + '%';
+                document.getElementById('statBest').textContent = bestScore;
+
+                const tbody = document.getElementById('reportsBody');
+                tbody.innerHTML = attempts.slice(0, 20).map(a => {
+                    const date = new Date(a.completed_at).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+                    const quizTitle = a.quizzes?.title || 'Quiz';
+                    return `<tr><td>${esc(quizTitle)}</td><td>${date}</td><td>${a.correct_answers}/${a.total_questions}</td><td>${a.score}</td></tr>`;
+                }).join('');
+            } else {
+                document.getElementById('reportsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Voce ainda nao jogou nenhum quiz</td></tr>';
+            }
+        } catch (err) {
+            console.error('Reports error:', err);
+        }
+    }
     </script>
 </body>
 </html>

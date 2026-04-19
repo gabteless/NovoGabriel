@@ -250,6 +250,8 @@
             .quiz-meta { gap: 6px; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
     <canvas class="stars-layer" id="stars1"></canvas>
@@ -398,15 +400,8 @@
         });
     }
 
-    // ===== QUIZ LIST (mock data) =====
-    const quizzes = [
-        { id: 1, title: 'Espaco e Astronomia', cat: 'Ciencias', diff: 'Medio', questions: 10, created: '2026-03-15' },
-        { id: 2, title: 'Historia do Brasil', cat: 'Historia', diff: 'Facil', questions: 8, created: '2026-03-10' },
-        { id: 3, title: 'Geografia Mundial', cat: 'Geografia', diff: 'Dificil', questions: 15, created: '2026-03-01' },
-        { id: 4, title: 'Matematica Basica', cat: 'Matematica', diff: 'Facil', questions: 12, created: '2026-02-20' },
-        { id: 5, title: 'Tecnologia e Inovacao', cat: 'Tecnologia', diff: 'Medio', questions: 7, created: '2026-02-15' },
-        { id: 6, title: 'Natureza e Meio Ambiente', cat: 'Natureza', diff: 'Facil', questions: 9, created: '2026-02-10' },
-    ];
+    // ===== QUIZ LIST (from Supabase) =====
+    let quizzes = [];
 
     function getDiffClass(diff) {
         const m = { Facil: 'quiz-diff-easy', Medio: 'quiz-diff-medium', Dificil: 'quiz-diff-hard' };
@@ -428,38 +423,38 @@
 
         container.innerHTML = `
             <div class="quiz-list">
-                ${quizzes.map(q => `
-                    <div class="quiz-item" data-id="${q.id}" onclick="selectQuiz(${q.id})">
+                ${quizzes.map(q => {
+                    const qCount = q.questions?.[0]?.count || 0;
+                    return `
+                    <div class="quiz-item" data-id="${q.id}" onclick="selectQuiz('${q.id}')">
                         <div class="quiz-info">
                             <div class="quiz-title">${esc(q.title)}</div>
                             <div class="quiz-meta">
-                                <span class="quiz-cat">${q.cat}</span>
-                                <span class="${getDiffClass(q.diff)}">${q.diff}</span>
-                                <span>${q.questions} perguntas</span>
+                                <span class="quiz-cat">${esc(q.category)}</span>
+                                <span class="${getDiffClass(q.difficulty)}">${q.difficulty}</span>
+                                <span>${qCount} perguntas</span>
                             </div>
                         </div>
                         <div class="select-indicator"></div>
-                    </div>
-                `).join('')}
+                    </div>`;
+                }).join('')}
             </div>
         `;
     }
 
     function selectQuiz(id) {
-        // deselect all
         document.querySelectorAll('.quiz-item').forEach(el => el.classList.remove('selected'));
-        // select clicked
         document.querySelector(`.quiz-item[data-id="${id}"]`).classList.add('selected');
         selectedQuizId = id;
         document.getElementById('toStep2').disabled = false;
 
-        // Update confirm panel info
         const quiz = quizzes.find(q => q.id === id);
         if (quiz) {
+            const qCount = quiz.questions?.[0]?.count || 0;
             document.getElementById('deleteTitle').textContent = quiz.title;
-            document.getElementById('deleteCat').textContent = quiz.cat;
-            document.getElementById('deleteDiff').textContent = quiz.diff;
-            document.getElementById('deleteQCount').textContent = quiz.questions;
+            document.getElementById('deleteCat').textContent = quiz.category;
+            document.getElementById('deleteDiff').textContent = quiz.difficulty;
+            document.getElementById('deleteQCount').textContent = qCount;
         }
     }
 
@@ -471,26 +466,36 @@
     });
 
     // Delete action
-    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
         if (!selectedQuizId) return;
 
         const quiz = quizzes.find(q => q.id === selectedQuizId);
+        this.disabled = true;
+        this.textContent = 'Deletando...';
 
-        // Show success step
-        document.getElementById('deletedQuizName').textContent = quiz.title;
+        try {
+            const { error } = await deleteQuiz(selectedQuizId);
+            if (error) {
+                showToast('Erro: ' + error.message, 'error');
+                this.disabled = false;
+                this.textContent = 'Deletar Quiz';
+                return;
+            }
 
-        // Update step 3 styling
-        document.querySelectorAll('#step3 .step').forEach((s,i) => {
-            s.className = 'step' + (i < 2 ? ' done' : ' active');
-        });
+            // Show success step
+            document.getElementById('deletedQuizName').textContent = quiz?.title || 'Quiz';
+            goToStep(3);
+            showToast(`Quiz "${quiz?.title}" deletado!`, 'success');
 
-        goToStep(3);
-
-        showToast(`Quiz "${quiz.title}" deletado!`, 'success');
-
-        // Remove from array (in real app would be an API call)
-        const idx = quizzes.findIndex(q => q.id === selectedQuizId);
-        if (idx > -1) quizzes.splice(idx, 1);
+            // Remove from local array
+            const idx = quizzes.findIndex(q => q.id === selectedQuizId);
+            if (idx > -1) quizzes.splice(idx, 1);
+        } catch (err) {
+            showToast('Erro ao deletar quiz', 'error');
+            this.disabled = false;
+            this.textContent = 'Deletar Quiz';
+            console.error(err);
+        }
     });
 
     // Button navigation
@@ -510,7 +515,24 @@
     }
 
     // Initial render
-    renderQuizList();
+    // renderQuizList(); -- now loaded from Supabase
+
+    // ===== SUPABASE INTEGRATION =====
+    (async () => {
+        if (typeof requireAuth !== 'function') return;
+        const { user, profile } = await requireAuth('professor');
+        if (!user) return;
+
+        try {
+            const { data, error } = await getMyQuizzes();
+            if (error) throw error;
+            quizzes = data || [];
+            renderQuizList();
+        } catch (err) {
+            document.getElementById('quizListContainer').innerHTML = '<div class="empty-state"><div class="empty-icon">⚠</div><div class="empty-title">Erro ao carregar quizzes</div></div>';
+            console.error(err);
+        }
+    })();
     </script>
 </body>
 </html>

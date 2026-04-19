@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNIVERSUS — Criar Conta</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             min-height: 100vh;
@@ -23,340 +19,127 @@
             overflow: hidden;
         }
 
-        .stars-layer {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
+        .stars-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-        .nebula {
-            position: fixed;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.15;
-            pointer-events: none;
-        }
-
+        .nebula { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(120px); opacity: 0.15; pointer-events: none; }
         .nebula-1 { top: -200px; left: -100px; background: #6a0dad; }
         .nebula-2 { bottom: -200px; right: -100px; background: #1e90ff; }
         .nebula-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff1493; opacity: 0.07; }
 
         .title {
-            position: relative;
-            font-size: 2.5rem;
-            font-weight: 900;
-            letter-spacing: 0.8rem;
+            position: relative; font-size: 2.5rem; font-weight: 900; letter-spacing: 0.8rem;
             background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
             background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 6s ease infinite;
-            user-select: none;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            animation: gradientShift 6s ease infinite; user-select: none;
         }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
+        @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
         .card {
-            position: relative;
-            z-index: 2;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 25px 28px 20px;
-            width: 370px;
-            max-width: 92vw;
+            position: relative; z-index: 2;
+            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px;
+            padding: 25px 28px 20px; width: 370px; max-width: 92vw;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         .card .icon {
-            width: 44px;
-            height: 44px;
-            margin: 0 auto 10px;
-            border-radius: 50%;
+            width: 44px; height: 44px; margin: 0 auto 10px; border-radius: 50%;
             background: linear-gradient(135deg, #7c3aed, #3b82f6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
         }
+        .card .icon svg { width: 22px; height: 22px; fill: white; }
 
-        .card .icon svg {
-            width: 22px;
-            height: 22px;
-            fill: white;
-        }
+        .card h2 { color: #e2e8f0; text-align: center; margin-bottom: 2px; font-size: 1.2rem; letter-spacing: 0.05em; }
+        .card .subtitle { color: rgba(255, 255, 255, 0.35); text-align: center; font-size: 0.85rem; margin-bottom: 12px; }
 
-        .card h2 {
-            color: #e2e8f0;
-            text-align: center;
-            margin-bottom: 2px;
-            font-size: 1.2rem;
-            letter-spacing: 0.05em;
-        }
-
-        .card .subtitle {
-            color: rgba(255, 255, 255, 0.35);
-            text-align: center;
-            font-size: 0.85rem;
-            margin-bottom: 12px;
-        }
-
-        .form-group {
-            margin-bottom: 10px;
-        }
-
-        .form-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 0.82rem;
-            margin-bottom: 6px;
-            letter-spacing: 0.03em;
-        }
-
-        .input-wrapper {
-            position: relative;
-        }
-
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; color: rgba(255, 255, 255, 0.5); font-size: 0.82rem; margin-bottom: 6px; letter-spacing: 0.03em; }
+        .input-wrapper { position: relative; }
         .input-wrapper svg {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 16px;
-            height: 16px;
-            fill: rgba(255, 255, 255, 0.25);
-            pointer-events: none;
-            transition: fill 0.3s;
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            width: 16px; height: 16px; fill: rgba(255, 255, 255, 0.25); pointer-events: none; transition: fill 0.3s;
         }
-
-        .form-group input {
-            width: 100%;
-            padding: 9px 14px 9px 38px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #e2e8f0;
-            font-size: 0.85rem;
-            outline: none;
-            transition: border-color 0.3s, box-shadow 0.3s;
+        .form-group input, .form-group select {
+            width: 100%; padding: 9px 14px 9px 38px;
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05); color: #e2e8f0; font-size: 0.85rem;
+            outline: none; transition: border-color 0.3s, box-shadow 0.3s; font-family: inherit;
         }
-
-        .form-group input::placeholder {
-            color: rgba(255, 255, 255, 0.18);
-        }
-
-        .form-group input:focus {
-            border-color: #a78bfa;
-            box-shadow: 0 0 15px rgba(167, 139, 250, 0.15);
-        }
-
-        .form-group input:focus + svg,
-        .input-wrapper:focus-within svg {
-            fill: #a78bfa;
-        }
+        .form-group input::placeholder { color: rgba(255, 255, 255, 0.18); }
+        .form-group input:focus, .form-group select:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167, 139, 250, 0.15); }
+        .form-group input:focus + svg, .input-wrapper:focus-within svg { fill: #a78bfa; }
+        .form-group select option { background: #1a1a2e; color: #e2e8f0; }
 
         .toggle-password {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; padding: 4px;
         }
+        .toggle-password svg { position: static; transform: none; width: 18px; height: 18px; fill: rgba(255, 255, 255, 0.25); transition: fill 0.3s; }
+        .toggle-password:hover svg { fill: rgba(255, 255, 255, 0.6); }
 
-        .toggle-password svg {
-            position: static;
-            transform: none;
-            width: 18px;
-            height: 18px;
-            fill: rgba(255, 255, 255, 0.25);
-            transition: fill 0.3s;
+        .strength-bar { display: flex; gap: 4px; margin-top: 5px; }
+        .strength-bar .bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.1); transition: background 0.3s; }
+        .strength-text { font-size: 0.72rem; margin-top: 4px; color: rgba(255, 255, 255, 0.3); transition: color 0.3s; }
+
+        /* Role selector */
+        .role-selector { display: flex; gap: 8px; margin-bottom: 14px; }
+        .role-option {
+            flex: 1; padding: 12px 8px; border-radius: 10px;
+            background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
+            text-align: center; cursor: pointer; transition: all 0.3s; user-select: none;
         }
+        .role-option:hover { background: rgba(255,255,255,0.08); }
+        .role-option.active { border-color: #7c3aed; background: rgba(124,58,237,0.15); }
+        .role-option .role-icon { font-size: 1.3rem; margin-bottom: 4px; }
+        .role-option .role-label { font-size: 0.75rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+        .role-option.active .role-label { color: #c4b5fd; }
 
-        .toggle-password:hover svg {
-            fill: rgba(255, 255, 255, 0.6);
-        }
-
-        /* Password strength */
-        .strength-bar {
-            display: flex;
-            gap: 4px;
-            margin-top: 5px;
-        }
-
-        .strength-bar .bar {
-            flex: 1;
-            height: 3px;
-            border-radius: 2px;
-            background: rgba(255, 255, 255, 0.1);
-            transition: background 0.3s;
-        }
-
-        .strength-text {
-            font-size: 0.72rem;
-            margin-top: 4px;
-            color: rgba(255, 255, 255, 0.3);
-            transition: color 0.3s;
-        }
-
-        .terms {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            margin: 22px 0;
-        }
-
+        .terms { display: flex; align-items: flex-start; gap: 10px; margin: 22px 0; }
         .terms input[type="checkbox"] {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            min-width: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 5px;
-            background: rgba(255, 255, 255, 0.05);
-            cursor: pointer;
-            margin-top: 2px;
-            position: relative;
+            appearance: none; -webkit-appearance: none; width: 18px; height: 18px; min-width: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 5px;
+            background: rgba(255, 255, 255, 0.05); cursor: pointer; margin-top: 2px; position: relative;
         }
-
-        .terms input[type="checkbox"]:checked {
-            background: linear-gradient(135deg, #7c3aed, #3b82f6);
-            border-color: transparent;
-        }
-
+        .terms input[type="checkbox"]:checked { background: linear-gradient(135deg, #7c3aed, #3b82f6); border-color: transparent; }
         .terms input[type="checkbox"]:checked::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 5px;
-            width: 5px;
-            height: 9px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+            content: ''; position: absolute; top: 2px; left: 5px; width: 5px; height: 9px;
+            border: solid white; border-width: 0 2px 2px 0; transform: rotate(45deg);
         }
-
-        .terms label {
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 0.8rem;
-            line-height: 1.4;
-            cursor: pointer;
-        }
-
-        .terms a {
-            color: #a78bfa;
-            text-decoration: none;
-        }
-
-        .terms a:hover {
-            text-decoration: underline;
-        }
+        .terms label { color: rgba(255, 255, 255, 0.4); font-size: 0.8rem; line-height: 1.4; cursor: pointer; }
+        .terms a { color: #a78bfa; text-decoration: none; }
+        .terms a:hover { text-decoration: underline; }
 
         .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 0.05em;
-            transition: transform 0.2s, box-shadow 0.3s;
+            width: 100%; padding: 14px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            letter-spacing: 0.05em; transition: transform 0.2s, box-shadow 0.3s, opacity 0.3s;
         }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white; box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3); }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 30px rgba(124, 58, 237, 0.5); }
 
-        .btn:active {
-            transform: scale(0.97);
-        }
+        .divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255, 255, 255, 0.08); }
+        .divider span { color: rgba(255, 255, 255, 0.25); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em; }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #7c3aed, #3b82f6);
-            color: white;
-            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
-        }
+        .message { text-align: center; padding: 10px 14px; border-radius: 8px; margin-bottom: 15px; font-size: 0.83rem; display: none; }
+        .message.success { display: block; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.25); color: #86efac; }
+        .message.error { display: block; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); color: #fca5a5; }
 
-        .btn-primary:hover {
-            box-shadow: 0 4px 30px rgba(124, 58, 237, 0.5);
-        }
+        .footer-link { text-align: center; margin-top: 24px; color: rgba(255, 255, 255, 0.35); font-size: 0.85rem; }
+        .footer-link a { color: #a78bfa; text-decoration: none; font-weight: 600; }
+        .footer-link a:hover { text-decoration: underline; }
 
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .btn .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 8px;
         }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 22px 0;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        .divider span {
-            color: rgba(255, 255, 255, 0.25);
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .message {
-            text-align: center;
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.83rem;
-            display: none;
-        }
-
-        .message.success {
-            display: block;
-            background: rgba(34, 197, 94, 0.12);
-            border: 1px solid rgba(34, 197, 94, 0.25);
-            color: #86efac;
-        }
-
-        .message.error {
-            display: block;
-            background: rgba(239, 68, 68, 0.12);
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            color: #fca5a5;
-        }
-
-        .footer-link {
-            text-align: center;
-            margin-top: 24px;
-            color: rgba(255, 255, 255, 0.35);
-            font-size: 0.85rem;
-        }
-
-        .footer-link a {
-            color: #a78bfa;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .footer-link a:hover {
-            text-decoration: underline;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -431,13 +214,26 @@
                 </div>
             </div>
 
+            <!-- Tipo de conta -->
+            <label style="display:block;color:rgba(255,255,255,0.5);font-size:0.82rem;margin-bottom:8px;">Tipo de conta</label>
+            <div class="role-selector">
+                <div class="role-option active" data-role="aluno" id="roleAluno">
+                    <div class="role-icon">🎓</div>
+                    <div class="role-label">Aluno</div>
+                </div>
+                <div class="role-option" data-role="professor" id="roleProfessor">
+                    <div class="role-icon">👨‍🏫</div>
+                    <div class="role-label">Professor</div>
+                </div>
+            </div>
+
             <!-- Terms -->
             <div class="terms">
                 <input type="checkbox" id="terms" required>
                 <label for="terms">Concordo com os <a href="#">Termos de Uso</a> e a <a href="#">Política de Privacidade</a></label>
             </div>
 
-            <button type="submit" class="btn btn-primary">Criar Conta</button>
+            <button type="submit" class="btn btn-primary" id="submitBtn">Criar Conta</button>
         </form>
 
         <div class="divider"><span>ou</span></div>
@@ -445,66 +241,48 @@
         <p class="footer-link">Ja tem uma conta? <a href="tela-login.html">Entrar</a></p>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+
     <script>
-        // Stars
+        // ===== STARS =====
         function generateStars(canvasId, count, size, speed) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             const stars = [];
             for (let i = 0; i < count; i++) {
-                stars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    r: Math.random() * size + 0.5,
-                    alpha: Math.random() * 0.8 + 0.2,
-                    twinkleSpeed: Math.random() * 0.02 + 0.005
-                });
+                stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*size+0.5, alpha: Math.random()*0.8+0.2, twinkleSpeed: Math.random()*0.02+0.005 });
             }
-
             let time = 0;
             function draw() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                time += speed;
+                ctx.clearRect(0,0,canvas.width,canvas.height); time += speed;
                 stars.forEach(s => {
-                    const alpha = s.alpha * (0.6 + 0.4 * Math.sin(time * s.twinkleSpeed * 10));
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-                    ctx.fill();
+                    const alpha = s.alpha*(0.6+0.4*Math.sin(time*s.twinkleSpeed*10));
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+                    ctx.fillStyle = `rgba(255,255,255,${alpha})`; ctx.fill();
                 });
                 requestAnimationFrame(draw);
             }
             draw();
-
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
+            window.addEventListener('resize',()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
         }
+        generateStars('stars1',200,1.2,0.3);
+        generateStars('stars2',100,1.8,0.2);
+        generateStars('stars3',50,2.5,0.1);
 
-        generateStars('stars1', 200, 1.2, 0.3);
-        generateStars('stars2', 100, 1.8, 0.2);
-        generateStars('stars3', 50, 2.5, 0.1);
-
-        // Toggle password visibility
+        // ===== TOGGLE PASSWORD =====
         function toggleShow(inputId, btn) {
             const input = document.getElementById(inputId);
             const isPassword = input.type === 'password';
             input.type = isPassword ? 'text' : 'password';
-            const path = isPassword
-                ? 'M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.27l3.16 3.16c-.15.86-.53 1.64-1.09 2.27L7.07 8.11c.63-.56 1.41-.94 2.27-1.09v.51z'
-                : 'M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z';
-            btn.querySelector('.eye-icon').setAttribute('d', path);
         }
 
-        // Password strength
+        // ===== PASSWORD STRENGTH =====
         const passwordInput = document.getElementById('password');
         const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
         const strengthText = document.getElementById('strengthText');
-
         const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#22c55e'];
         const labels = ['Fraca', 'Razoavel', 'Boa', 'Forte'];
 
@@ -515,57 +293,64 @@
             if (val.length >= 10) score++;
             if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
             if (/[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) score++;
-
-            bars.forEach((bar, i) => {
-                bar.style.background = i < score ? colors[score - 1] : 'rgba(255, 255, 255, 0.1)';
-            });
-
-            if (val.length === 0) {
-                strengthText.textContent = '';
-            } else {
-                strengthText.textContent = labels[score - 1] || 'Muito fraca';
-                strengthText.style.color = score > 0 ? colors[score - 1] : 'rgba(255,255,255,0.2)';
-            }
+            bars.forEach((bar, i) => { bar.style.background = i < score ? colors[score-1] : 'rgba(255,255,255,0.1)'; });
+            if (val.length === 0) { strengthText.textContent = ''; }
+            else { strengthText.textContent = labels[score-1] || 'Muito fraca'; strengthText.style.color = score > 0 ? colors[score-1] : 'rgba(255,255,255,0.2)'; }
         });
 
-        // Show/hide message
+        // ===== ROLE SELECTOR =====
+        let selectedRole = 'aluno';
+        document.querySelectorAll('.role-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedRole = opt.dataset.role;
+            });
+        });
+
+        // ===== SHOW MESSAGE =====
         function showMessage(text, type) {
             const el = document.getElementById('msg');
-            el.textContent = text;
-            el.className = 'message ' + type;
+            el.textContent = text; el.className = 'message ' + type;
         }
 
-        // Form submit
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
+        // ===== FORM SUBMIT =====
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim().toLowerCase();
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirm').value;
+            const btn = document.getElementById('submitBtn');
 
-            if (pass !== confirm) {
-                showMessage('As senhas nao coincidem.', 'error');
+            if (pass !== confirm) { showMessage('As senhas nao coincidem.', 'error'); return; }
+            if (pass.length < 6) { showMessage('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Criando conta...';
+
+            const { user, error } = await signUp(email, pass, name, selectedRole);
+
+            btn.disabled = false;
+            btn.textContent = 'Criar Conta';
+
+            if (error) {
+                let errorMsg = 'Erro ao criar conta.';
+                if (error.message.includes('already registered')) {
+                    errorMsg = 'Este email ja esta cadastrado.';
+                } else if (error.message.includes('valid email')) {
+                    errorMsg = 'Email invalido.';
+                } else {
+                    errorMsg = error.message;
+                }
+                showMessage(errorMsg, 'error');
                 return;
             }
-
-            if (pass.length < 6) {
-                showMessage('A senha deve ter pelo menos 6 caracteres.', 'error');
-                return;
-            }
-
-            const users = JSON.parse(localStorage.getItem('universus_users') || '[]');
-            if (users.find(u => u.email === email)) {
-                showMessage('Este email ja esta cadastrado.', 'error');
-                return;
-            }
-
-            users.push({ name, email, password: btoa(pass) });
-            localStorage.setItem('universus_users', JSON.stringify(users));
 
             showMessage('Conta criada com sucesso! Redirecionando...', 'success');
 
             setTimeout(() => {
-                window.location.href = 'index.html';
+                window.location.href = 'tela-login.html';
             }, 2000);
         });
     </script>

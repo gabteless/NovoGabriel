@@ -215,6 +215,8 @@
             .code-text { font-size: 2rem; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
 </head>
 <body>
     <canvas class="stars-layer" id="stars1"></canvas>
@@ -436,7 +438,7 @@
         });
 
         // Events
-        d.querySelectorAll('.q-remove').forEach(btn => btn.onclick = () => removeQuestion(+btn.dataset.id));
+        el.querySelectorAll('.q-remove').forEach(btn => btn.onclick = () => removeQuestion(+btn.dataset.id));
     }
     function esc(s) { return (s||'').replace(/"/g,'&quot;'); }
 
@@ -576,6 +578,90 @@
 
     // Start with one question
     addQuestion();
+
+    // ===== SUPABASE INTEGRATION =====
+    (async () => {
+        if (typeof requireAuth === 'function') {
+            const { user, profile } = await requireAuth('professor');
+            if (!user) return;
+        }
+    })();
+
+    // Override generateCode to also save to DB
+    document.getElementById('generateCode').onclick = async () => {
+        // Validate quiz data
+        if (!validateStep1()) { showToast('Preencha os detalhes do quiz'); return; }
+        if (quiz.questions.length === 0) { showToast('Adicione pelo menos uma pergunta'); return; }
+
+        // Collect all question data from inputs
+        quiz.questions.forEach(q => {
+            const qEl = document.querySelector(`.q-text[data-id="${q.id}"]`);
+            if (qEl) q.q = qEl.value;
+            q.options.forEach((o, oi) => {
+                const oEl = document.querySelector(`.opt-text[data-id="${q.id}"][data-oi="${oi}"]`);
+                if (oEl) q.options[oi] = oEl.value;
+            });
+        });
+
+        // Check if already saved
+        if (quiz.savedToDb) {
+            document.getElementById('accessCode').textContent = quiz.code;
+            showToast('Codigo ja foi gerado!');
+            return;
+        }
+
+        const questionsData = quiz.questions.map(q => ({
+            question: q.q,
+            options: q.options,
+            correctIndex: q.correct
+        }));
+
+        const quizData = {
+            title: quiz.title,
+            description: quiz.desc,
+            category: quiz.cat,
+            difficulty: quiz.diff,
+            timePerQuestion: quiz.time
+        };
+
+        showToast('Salvando quiz...');
+
+        try {
+            const result = await createQuiz(quizData, questionsData);
+            if (result.error) {
+                showToast('Erro: ' + result.error.message);
+                return;
+            }
+
+            quiz.code = result.accessCode;
+            quiz.dbId = result.quiz.id;
+            quiz.savedToDb = true;
+            document.getElementById('accessCode').textContent = result.accessCode;
+            buildQR(result.accessCode);
+            showToast('Quiz salvo com sucesso! Codigo: ' + result.accessCode);
+        } catch (err) {
+            showToast('Erro ao salvar quiz');
+            console.error(err);
+        }
+    };
+
+    // Override start quiz to activate in DB
+    document.getElementById('startQuiz').onclick = async () => {
+        if (!quiz.dbId) {
+            showToast('Gere o codigo primeiro');
+            return;
+        }
+
+        try {
+            await toggleQuizActive(quiz.dbId, true);
+            const badge = document.getElementById('quizStatusBadge');
+            badge.innerHTML = `<span class="status-badge"><span class="status-dot"></span>Quiz ao vivo — aguardando alunos</span>`;
+            showToast('Quiz ativado! Alunos podem entrar agora.');
+        } catch (err) {
+            showToast('Erro ao ativar quiz');
+            console.error(err);
+        }
+    };
     </script>
 </body>
 </html>

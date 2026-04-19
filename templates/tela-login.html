@@ -48,7 +48,7 @@
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 20px; padding: 40px 35px;
-            width: 380px; max-width: 90vw;
+            width: 400px; max-width: 90vw;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
 
@@ -64,26 +64,47 @@
 
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 6px; }
-        .form-group input {
+        .form-group input, .form-group select {
             width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1);
             border-radius: 10px; background: rgba(255,255,255,0.05);
             color: #e2e8f0; font-size: 0.95rem; outline: none;
             transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
         }
         .form-group input::placeholder { color: rgba(255,255,255,0.2); }
-        .form-group input:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
+        .form-group input:focus, .form-group select:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
+        .form-group select option { background: #1a1a2e; color: #e2e8f0; }
+
+        /* Role selector */
+        .role-selector {
+            display: flex; gap: 10px; margin-bottom: 20px;
+        }
+        .role-option {
+            flex: 1; padding: 14px 12px; border-radius: 12px;
+            background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
+            text-align: center; cursor: pointer;
+            transition: all 0.3s; user-select: none;
+        }
+        .role-option:hover { background: rgba(255,255,255,0.08); }
+        .role-option.active {
+            border-color: #7c3aed; background: rgba(124,58,237,0.15);
+        }
+        .role-option .role-icon { font-size: 1.5rem; margin-bottom: 6px; }
+        .role-option .role-label { font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 600; }
+        .role-option.active .role-label { color: #c4b5fd; }
 
         .btn {
             width: 100%; padding: 13px; border: none; border-radius: 10px;
             font-size: 1rem; font-weight: 600; cursor: pointer;
-            letter-spacing: 0.05em; transition: transform 0.2s, box-shadow 0.3s;
+            letter-spacing: 0.05em; transition: transform 0.2s, box-shadow 0.3s, opacity 0.3s;
         }
         .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary {
             background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white;
             box-shadow: 0 4px 20px rgba(124,58,237,0.4);
         }
-        .btn-primary:hover { box-shadow: 0 4px 30px rgba(124,58,237,0.6); }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 30px rgba(124,58,237,0.6); }
 
         .toggle-text {
             text-align: center; margin-top: 20px;
@@ -100,6 +121,15 @@
         .message.error { display: block; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
 
         .hidden { display: none; }
+
+        /* Loading spinner */
+        .btn .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -126,7 +156,7 @@
                 <label>Senha</label>
                 <input type="password" id="loginPassword" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn btn-primary">Entrar</button>
+            <button type="submit" class="btn btn-primary" id="loginBtn">Entrar</button>
         </form>
         <p class="toggle-text">
             Nao tem uma conta? <a id="showRegister">Criar conta</a>
@@ -155,14 +185,67 @@
                 <label>Confirmar Senha</label>
                 <input type="password" id="registerConfirm" placeholder="Repita a senha" required minlength="6">
             </div>
-            <button type="submit" class="btn btn-primary">Criar Conta</button>
+
+            <label style="display:block;color:rgba(255,255,255,0.6);font-size:0.85rem;margin-bottom:10px;">Tipo de conta</label>
+            <div class="role-selector">
+                <div class="role-option active" data-role="aluno" id="roleAluno">
+                    <div class="role-icon">🎓</div>
+                    <div class="role-label">Aluno</div>
+                </div>
+                <div class="role-option" data-role="professor" id="roleProfessor">
+                    <div class="role-icon">👨‍🏫</div>
+                    <div class="role-label">Professor</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="registerBtn">Criar Conta</button>
         </form>
         <p class="toggle-text">
             Ja tem uma conta? <a id="showLogin">Entrar</a>
         </p>
     </div>
 
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
     <script>
+        // ===== SUPABASE INIT =====
+        const SUPABASE_URL = 'https://otxvqphwtuldkrglfwxh.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eHZxcGh3dHVsZGtyZ2xmd3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk4OTgsImV4cCI6MjA4ODY3NTg5OH0.jRyaHr3k96dm5-486S-EXvNespBl9Iwh2bIupM1YnVU';
+
+        let _supabase;
+        try {
+            _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase OK');
+        } catch(e) {
+            console.error('Supabase init error:', e);
+        }
+
+        async function signUp(email, password, name, role) {
+            const { data, error } = await _supabase.auth.signUp({ email, password, options: { data: { name, role } } });
+            return { user: data?.user, session: data?.session, error };
+        }
+        async function signIn(email, password) {
+            const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+            return { user: data?.user, session: data?.session, error };
+        }
+        async function getUser() {
+            const { data: { user }, error } = await _supabase.auth.getUser();
+            if (error || !user) return { user: null, profile: null };
+            const { data: profile } = await _supabase.from('profiles').select('*').eq('id', user.id).single();
+            return { user, profile };
+        }
+        async function getSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            return session;
+        }
+        function redirectToDashboard(role) {
+            window.location.href = role === 'professor' ? 'pagina-inicial.html' : 'pagina-inicial-aluno.html';
+        }
+    </script>
+
+    <script>
+        // ===== STARS =====
         function generateStars(canvasId, count, size, speed) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
@@ -189,6 +272,7 @@
         generateStars('stars1',200,1.2,0.3);
         generateStars('stars2',100,1.8,0.2);
 
+        // ===== CARD TOGGLE =====
         const loginCard = document.getElementById('loginCard');
         const registerCard = document.getElementById('registerCard');
 
@@ -207,48 +291,121 @@
             el.textContent = text; el.className = 'message ' + type;
         }
 
-        function getUsers() { return JSON.parse(localStorage.getItem('universus_users')||'[]'); }
-        function saveUsers(u) { localStorage.setItem('universus_users', JSON.stringify(u)); }
+        // ===== ROLE SELECTOR =====
+        let selectedRole = 'aluno';
+        document.querySelectorAll('.role-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.role-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                selectedRole = opt.dataset.role;
+            });
+        });
 
-        document.getElementById('registerForm').addEventListener('submit', e => {
+        // ===== CHECK IF ALREADY LOGGED IN =====
+        (async () => {
+            const session = await getSession();
+            if (session) {
+                const { profile } = await getUser();
+                if (profile) {
+                    redirectToDashboard(profile.role);
+                }
+            }
+        })();
+
+        // ===== REGISTER =====
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('registerName').value.trim();
             const email = document.getElementById('registerEmail').value.trim().toLowerCase();
             const pass = document.getElementById('registerPassword').value;
             const confirm = document.getElementById('registerConfirm').value;
             const msg = document.getElementById('registerMsg');
+            const btn = document.getElementById('registerBtn');
 
             if (pass !== confirm) { showMessage(msg, 'As senhas nao coincidem.', 'error'); return; }
+            if (pass.length < 6) { showMessage(msg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
 
-            const users = getUsers();
-            if (users.find(u => u.email === email)) { showMessage(msg, 'Este email ja esta cadastrado.', 'error'); return; }
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Criando conta...';
 
-            users.push({ name, email, password: btoa(pass) });
-            saveUsers(users);
-            showMessage(msg, 'Conta criada com sucesso! Faca login.', 'success');
-            document.getElementById('registerForm').reset();
+            try {
+                console.log('Tentando criar conta...', { email, name, role: selectedRole });
+                const { user, error } = await signUp(email, pass, name, selectedRole);
+                console.log('Resposta signUp:', { user, error });
 
-            setTimeout(()=>{
-                registerCard.classList.add('hidden'); loginCard.classList.remove('hidden');
-                showMessage(document.getElementById('loginMsg'), 'Conta criada! Agora faca login.', 'success');
-            }, 1500);
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta';
+
+                if (error) {
+                    let errorMsg = 'Erro ao criar conta.';
+                    if (error.message && error.message.includes('already registered')) {
+                        errorMsg = 'Este email ja esta cadastrado.';
+                    } else if (error.message && error.message.includes('valid email')) {
+                        errorMsg = 'Email invalido.';
+                    } else if (error.message && error.message.includes('password')) {
+                        errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+                    showMessage(msg, errorMsg, 'error');
+                    return;
+                }
+
+                showMessage(msg, 'Conta criada com sucesso! Faca login.', 'success');
+                document.getElementById('registerForm').reset();
+
+                setTimeout(()=>{
+                    registerCard.classList.add('hidden'); loginCard.classList.remove('hidden');
+                    showMessage(document.getElementById('loginMsg'), 'Conta criada! Agora faca login.', 'success');
+                }, 1500);
+            } catch (err) {
+                console.error('Erro no registro:', err);
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta';
+                showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
+            }
         });
 
-        document.getElementById('loginForm').addEventListener('submit', e => {
+        // ===== LOGIN =====
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
             const pass = document.getElementById('loginPassword').value;
             const msg = document.getElementById('loginMsg');
+            const btn = document.getElementById('loginBtn');
 
-            const users = getUsers();
-            const user = users.find(u => u.email === email && atob(u.password) === pass);
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Entrando...';
+
+            const { user, session, error } = await signIn(email, pass);
+
+            btn.disabled = false;
+            btn.textContent = 'Entrar';
+
+            if (error) {
+                let errorMsg = 'Email ou senha incorretos.';
+                if (error.message.includes('Invalid login')) {
+                    errorMsg = 'Email ou senha incorretos.';
+                } else if (error.message.includes('Email not confirmed')) {
+                    errorMsg = 'Confirme seu email antes de entrar.';
+                } else {
+                    errorMsg = error.message;
+                }
+                showMessage(msg, errorMsg, 'error');
+                return;
+            }
 
             if (user) {
-                showMessage(msg, `Bem-vindo ao UNIVERSUS, ${user.name}!`, 'success');
+                // Buscar perfil para saber o role
+                const { profile } = await getUser();
+                const userName = profile?.name || 'Explorador';
+                showMessage(msg, `Bem-vindo ao UNIVERSUS, ${userName}!`, 'success');
 
-                setTimeout(()=>{ window.location.href = 'pagina-inicial.html'; }, 1500);
-            } else {
-                showMessage(msg, 'Email ou senha incorretos.', 'error');
+                setTimeout(()=>{
+                    redirectToDashboard(profile?.role || 'aluno');
+                }, 1000);
             }
         });
     </script>
