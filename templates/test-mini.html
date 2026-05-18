@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mini Preview</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a1a; display: flex; gap: 20px; padding: 40px; align-items: flex-start; }
+        .container { width: 120px; height: 120px; border: 2px solid red; position: relative; overflow: hidden; background: rgba(255,255,255,0.05); }
+        .container canvas { width: 100% !important; height: 100% !important; display: block; }
+        #status { position: fixed; top: 10px; left: 10px; color: white; background: rgba(0,0,0,0.8); padding: 10px; font-size: 12px; max-width: 400px; }
+    </style>
+</head>
+<body>
+    <div id="status"></div>
+    <div class="container" id="charPreviewSidebar"></div>
+    <div class="container" id="charPreviewPanel" style="width:200px;height:200px;border-color:green;"></div>
+
+    <script>
+    const log = [];
+    function s(msg) { log.push(msg); document.getElementById('status').textContent = log.join('\n'); }
+    s('Script loaded');
+    s('THREE available: ' + (typeof THREE !== 'undefined'));
+
+    function M(c) { return new THREE.MeshPhongMaterial({ color: new THREE.Color(c), shininess: 25 }); }
+
+    function buildAvatar(ch, grp) {
+        while (grp.children.length) grp.remove(grp.children[0]);
+        const sk = M(ch.sk), hr = M(ch.hc), sh = M(ch.sc);
+        const ew = M(0xffffff), ir = M(ch.ec);
+        const pu = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const wt = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const mt = new THREE.MeshPhongMaterial({ color: 0xc0392b });
+
+        // Body
+        grp.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.40, 0.85, 16), sh), { position: new THREE.Vector3(0, -1.5, 0) }));
+
+        // Head
+        const hd = new THREE.Mesh(new THREE.SphereGeometry(0.62, 24, 24), sk);
+        hd.position.y = -0.15;
+        grp.add(hd);
+
+        // Eyes
+        const eSz = 0.11;
+        [-0.2, 0.2].forEach(x => {
+            const ew2 = new THREE.Mesh(new THREE.SphereGeometry(eSz, 14, 14), ew.clone());
+            ew2.position.set(x, -0.05, 0.55);
+            ew2.scale.set(1, 1, 0.55);
+            grp.add(ew2);
+            const ir2 = new THREE.Mesh(new THREE.SphereGeometry(eSz * 0.6, 12, 12), ir.clone());
+            ir2.position.z = eSz * 0.55;
+            ew2.add(ir2);
+            const pu2 = new THREE.Mesh(new THREE.SphereGeometry(eSz * 0.3, 10, 10), pu.clone());
+            pu2.position.z = eSz * 0.5;
+            ew2.add(pu2);
+            const sh2 = new THREE.Mesh(new THREE.SphereGeometry(eSz * 0.18, 6, 6), wt.clone());
+            sh2.position.set(-0.02, eSz * 0.2, eSz * 0.65);
+            ew2.add(sh2);
+        });
+
+        // Nose
+        const ns = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 10), sk.clone());
+        ns.position.set(0, -0.14, 0.62);
+        grp.add(ns);
+
+        // Mouth
+        const mm = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.022, 8, 16, Math.PI), mt);
+        mm.position.set(0, -0.38, 0.52);
+        mm.rotation.x = Math.PI;
+        mm.rotation.z = Math.PI;
+        grp.add(mm);
+
+        // Hair
+        const ht = new THREE.Mesh(new THREE.SphereGeometry(0.66, 20, 20, 0, Math.PI * 2, 0, Math.PI * 0.55), hr);
+        ht.position.set(0, -0.05, -0.02);
+        grp.add(ht);
+        const hb = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 16, 0, Math.PI * 2, 0, Math.PI * 0.4), hr);
+        hb.position.set(0, 0.2, -0.06);
+        grp.add(hb);
+
+        grp.position.y = 0.4;
+        grp.scale.set(0.6, 0.6, 0.6);
+    }
+
+    function addMini(id, ch, w, h) {
+        const el = document.getElementById(id);
+        s('addMini("' + id + '"): el=' + (el ? 'found' : 'null') + ', w=' + w + ', h=' + h);
+
+        if (!el) return false;
+        if (el.querySelector('canvas')) { s('canvas already exists'); return true; }
+
+        const sc = new THREE.Scene();
+        s(id + ': scene created');
+
+        const cm = new THREE.PerspectiveCamera(40, w / h, 0.1, 50);
+        cm.position.set(0, 0.3, 3);
+        s(id + ': camera created, aspect=' + (w/h));
+
+        const rn = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        rn.setSize(w, h);
+        rn.setClearColor(0, 0);
+        s(id + ': renderer created, size=' + w + 'x' + h);
+
+        el.appendChild(rn.domElement);
+        s(id + ': canvas appended, canvas=' + (el.querySelector('canvas') ? 'yes' : 'NO'));
+
+        sc.add(new THREE.AmbientLight(0x6060a0, 0.7));
+        const d = new THREE.DirectionalLight(0xffffff, 1.0);
+        d.position.set(2, 4, 3);
+        sc.add(d);
+        s(id + ': lights added');
+
+        const gr = new THREE.Group();
+        sc.add(gr);
+        buildAvatar(ch, gr);
+        s(id + ': avatar built, children=' + gr.children.length);
+
+        (function anim() {
+            requestAnimationFrame(anim);
+            gr.rotation.y += 0.01;
+            rn.render(sc, cm);
+        })();
+        s(id + ': animation started');
+
+        return true;
+    }
+
+    const P = {
+        sk: '#f4c595', hc: '#8b4513', sc: '#7c3aed',
+        ec: '#8b4513'
+    };
+
+    // Try after load event
+    window.addEventListener('load', function() {
+        s('Window load event fired');
+        setTimeout(function() {
+            s('--- Starting init ---');
+            s('THREE type: ' + typeof THREE);
+            s('THREE.Scene type: ' + typeof THREE.Scene);
+
+            addMini('charPreviewSidebar', P, 120, 120);
+            addMini('charPreviewPanel', P, 200, 200);
+        }, 500);
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVERSUS — Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden;
+        }
+
+        .stars-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+
+        .nebula {
+            position: fixed; width: 600px; height: 600px; border-radius: 50%;
+            filter: blur(120px); opacity: 0.15; pointer-events: none;
+        }
+        .nebula-1 { top: -200px; left: -100px; background: #6a0dad; }
+        .nebula-2 { bottom: -200px; right: -100px; background: #1e90ff; }
+
+        .title {
+            position: fixed; top: 40px; left: 50%; transform: translateX(-50%);
+            font-size: 3.5rem; font-weight: 900; letter-spacing: 1.2rem;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
+            background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+            user-select: none;
+        }
+
+        @keyframes gradientShift {
+            0%,100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .card {
+            position: relative; z-index: 2;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 40px 35px;
+            width: 420px; max-width: 90vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .card h2 {
+            color: #e2e8f0; text-align: center; margin-bottom: 8px;
+            font-size: 1.5rem; letter-spacing: 0.1em;
+        }
+
+        .card .subtitle {
+            color: rgba(255,255,255,0.4); text-align: center;
+            font-size: 0.85rem; margin-bottom: 30px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-bottom: 6px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; background: rgba(255,255,255,0.05);
+            color: #e2e8f0; font-size: 0.95rem; outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            font-family: inherit;
+        }
+        .form-group input::placeholder { color: rgba(255,255,255,0.2); }
+        .form-group input:focus, .form-group select:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
+
+        .btn {
+            width: 100%; padding: 13px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer;
+            letter-spacing: 0.05em; transition: transform 0.2s, box-shadow 0.3s, opacity 0.3s;
+        }
+        .btn:active { transform: scale(0.97); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white;
+            box-shadow: 0 4px 20px rgba(124,58,237,0.4);
+        }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 30px rgba(124,58,237,0.6); }
+
+        .btn-student {
+            background: rgba(255,255,255,0.06); color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.12);
+            margin-top: 12px;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .btn-student:hover { background: rgba(255,255,255,0.1); border-color: rgba(167,139,250,0.4); }
+
+        .toggle-text {
+            text-align: center; margin-top: 20px;
+            color: rgba(255,255,255,0.4); font-size: 0.85rem;
+        }
+        .toggle-text a { color: #a78bfa; cursor: pointer; text-decoration: none; font-weight: 600; }
+        .toggle-text a:hover { text-decoration: underline; }
+
+        .message {
+            text-align: center; padding: 10px; border-radius: 8px;
+            margin-bottom: 15px; font-size: 0.85rem; display: none;
+        }
+        .message.success { display: block; background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #86efac; }
+        .message.error { display: block; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+
+        .hidden { display: none; }
+
+        /* Loading spinner */
+        .btn .spinner {
+            display: inline-block; width: 18px; height: 18px;
+            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+            border-radius: 50%; animation: spin 0.6s linear infinite;
+            vertical-align: middle; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Separator */
+        .separator {
+            display: flex; align-items: center; gap: 14px; margin: 24px 0;
+            color: rgba(255,255,255,0.2); font-size: 0.8rem;
+        }
+        .separator::before, .separator::after {
+            content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08);
+        }
+
+        /* Student nickname input */
+        .nickname-input {
+            width: 100%; padding: 14px 18px; border-radius: 12px;
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0; font-size: 1.1rem; text-align: center; outline: none;
+            transition: border-color 0.3s; font-family: inherit;
+        }
+        .nickname-input:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
+        .nickname-input::placeholder { color: rgba(255,255,255,0.2); }
+
+        /* Back link */
+        .back-link {
+            text-align: center; margin-top: 16px;
+        }
+        .back-link a {
+            color: rgba(255,255,255,0.35); cursor: pointer; text-decoration: none; font-size: 0.82rem;
+        }
+        .back-link a:hover { color: rgba(255,255,255,0.6); }
+
+        /* Role icons */
+        .role-choice {
+            display: flex; gap: 14px; margin-bottom: 12px;
+        }
+        .role-btn {
+            flex: 1; padding: 20px 12px; border-radius: 14px;
+            background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
+            text-align: center; cursor: pointer;
+            transition: all 0.3s; user-select: none;
+        }
+        .role-btn:hover { background: rgba(255,255,255,0.08); }
+        .role-btn .role-icon { font-size: 2rem; margin-bottom: 8px; }
+        .role-btn .role-label { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+        .role-btn .role-desc { font-size: 0.7rem; color: rgba(255,255,255,0.25); margin-top: 4px; }
+    </style>
+</head>
+<body>
+
+    <canvas class="stars-layer" id="stars1"></canvas>
+    <canvas class="stars-layer" id="stars2"></canvas>
+
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+
+    <h1 class="title">UNIVERSUS</h1>
+
+    <!-- TELA 1: Escolha Professor ou Aluno -->
+    <div class="card" id="choiceCard">
+        <h2>Bem-vindo</h2>
+        <p class="subtitle">Escolha como deseja entrar</p>
+        <div class="role-choice">
+            <div class="role-btn" id="choiceTeacher">
+                <div class="role-icon">👨‍🏫</div>
+                <div class="role-label">Professor</div>
+                <div class="role-desc">Email e senha</div>
+            </div>
+            <div class="role-btn" id="choiceStudent">
+                <div class="role-icon">🎓</div>
+                <div class="role-label">Aluno</div>
+                <div class="role-desc">Apenas apelido</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA 2: Login Professor -->
+    <div class="card hidden" id="loginCard">
+        <h2>Entrar como Professor</h2>
+        <p class="subtitle">Use seu email e senha</p>
+        <div class="message" id="loginMsg"></div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="loginBtn">Entrar</button>
+        </form>
+        <p class="toggle-text">
+            Nao tem uma conta? <a id="showRegister">Criar conta</a>
+        </p>
+        <div class="back-link"><a id="backFromLogin">← Voltar</a></div>
+    </div>
+
+    <!-- TELA 3: Registro Professor -->
+    <div class="card hidden" id="registerCard">
+        <h2>Criar Conta de Professor</h2>
+        <p class="subtitle">Junte-se ao UNIVERSUS</p>
+        <div class="message" id="registerMsg"></div>
+        <form id="registerForm">
+            <div class="form-group">
+                <label>Nome</label>
+                <input type="text" id="registerName" placeholder="Seu nome" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="registerEmail" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label>Senha</label>
+                <input type="password" id="registerPassword" placeholder="Minimo 6 caracteres" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label>Confirmar Senha</label>
+                <input type="password" id="registerConfirm" placeholder="Repita a senha" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary" id="registerBtn">Criar Conta</button>
+        </form>
+        <p class="toggle-text">
+            Ja tem uma conta? <a id="showLogin">Entrar</a>
+        </p>
+        <div class="back-link"><a id="backFromRegister">← Voltar</a></div>
+    </div>
+
+    <!-- TELA 4: Entrada Aluno (apelido) -->
+    <div class="card hidden" id="studentCard">
+        <h2>Entrar como Aluno</h2>
+        <p class="subtitle">Escolha um apelido para jogar</p>
+        <div class="message" id="studentMsg"></div>
+        <div class="form-group">
+            <input type="text" class="nickname-input" id="nicknameInput" placeholder="Seu apelido..." maxlength="25" autofocus>
+        </div>
+        <button class="btn btn-primary" id="studentEnterBtn">Entrar</button>
+        <div class="back-link"><a id="backFromStudent">← Voltar</a></div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+
+    <script>
+        // ===== STARS =====
+        function generateStars(canvasId, count, size, speed) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const stars = [];
+            for (let i = 0; i < count; i++) {
+                stars.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*size+0.5, alpha: Math.random()*0.8+0.2, twinkle: Math.random()*0.02+0.005 });
+            }
+            let time = 0;
+            function draw() {
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                time += speed;
+                stars.forEach(s => {
+                    const a = s.alpha*(0.6+0.4*Math.sin(time*s.twinkle*10));
+                    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+                    ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+            window.addEventListener('resize',()=>{ canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+        }
+        generateStars('stars1',200,1.2,0.3);
+        generateStars('stars2',100,1.8,0.2);
+
+        // ===== CARD NAVIGATION =====
+        const choiceCard = document.getElementById('choiceCard');
+        const loginCard = document.getElementById('loginCard');
+        const registerCard = document.getElementById('registerCard');
+        const studentCard = document.getElementById('studentCard');
+
+        function showCard(card) {
+            [choiceCard, loginCard, registerCard, studentCard].forEach(c => c.classList.add('hidden'));
+            card.classList.remove('hidden');
+            clearMsg();
+        }
+
+        function clearMsg() {
+            document.querySelectorAll('.message').forEach(m => { m.className='message'; m.textContent=''; });
+        }
+
+        function showMessage(el, text, type) {
+            el.textContent = text; el.className = 'message ' + type;
+        }
+
+        // Choice buttons
+        document.getElementById('choiceTeacher').addEventListener('click', () => showCard(loginCard));
+        document.getElementById('choiceStudent').addEventListener('click', () => {
+            showCard(studentCard);
+            // Pre-fill if nickname exists
+            const saved = localStorage.getItem('uv_student_nickname');
+            if (saved) document.getElementById('nicknameInput').value = saved;
+            setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
+        });
+
+        // Toggle login/register
+        document.getElementById('showRegister').addEventListener('click', () => showCard(registerCard));
+        document.getElementById('showLogin').addEventListener('click', () => showCard(loginCard));
+
+        // Back buttons
+        document.getElementById('backFromLogin').addEventListener('click', () => showCard(choiceCard));
+        document.getElementById('backFromRegister').addEventListener('click', () => showCard(choiceCard));
+        document.getElementById('backFromStudent').addEventListener('click', () => showCard(choiceCard));
+
+        // ===== STUDENT NICKNAME ENTRY =====
+        const nicknameInput = document.getElementById('nicknameInput');
+        const studentMsg = document.getElementById('studentMsg');
+
+        nicknameInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('studentEnterBtn').click();
+        });
+
+        document.getElementById('studentEnterBtn').addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname.length < 2) {
+                showMessage(studentMsg, 'O apelido deve ter pelo menos 2 caracteres.', 'error');
+                return;
+            }
+            // Save nickname directly to localStorage
+            localStorage.setItem('uv_student_nickname', nickname);
+            showMessage(studentMsg, `Bem-vindo, ${nickname}!`, 'success');
+            setTimeout(() => {
+                window.location.href = 'pagina-inicial-aluno.html';
+            }, 800);
+        });
+
+        // ===== REGISTER (PROFESSOR ONLY) =====
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            const pass = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('registerConfirm').value;
+            const msg = document.getElementById('registerMsg');
+            const btn = document.getElementById('registerBtn');
+
+            if (pass !== confirm) { showMessage(msg, 'As senhas nao coincidem.', 'error'); return; }
+            if (pass.length < 6) { showMessage(msg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Criando conta...';
+
+            try {
+                // Always register as professor
+                const { user, error } = await signUp(email, pass, name, 'professor');
+
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta';
+
+                if (error) {
+                    let errorMsg = 'Erro ao criar conta.';
+                    if (error.message && error.message.includes('already registered')) {
+                        errorMsg = 'Este email ja esta cadastrado.';
+                    } else if (error.message && error.message.includes('valid email')) {
+                        errorMsg = 'Email invalido.';
+                    } else if (error.message && error.message.includes('password')) {
+                        errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+                    showMessage(msg, errorMsg, 'error');
+                    return;
+                }
+
+                showMessage(msg, 'Conta criada com sucesso! Faca login.', 'success');
+                document.getElementById('registerForm').reset();
+
+                setTimeout(() => {
+                    showCard(loginCard);
+                    showMessage(document.getElementById('loginMsg'), 'Conta criada! Agora faca login.', 'success');
+                }, 1500);
+            } catch (err) {
+                console.error('Erro no registro:', err);
+                btn.disabled = false;
+                btn.textContent = 'Criar Conta';
+                showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
+            }
+        });
+
+        // ===== LOGIN (PROFESSOR ONLY) =====
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+            const pass = document.getElementById('loginPassword').value;
+            const msg = document.getElementById('loginMsg');
+            const btn = document.getElementById('loginBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Entrando...';
+
+            try {
+                const { user, session, error } = await signIn(email, pass);
+
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+
+                if (error) {
+                    let errorMsg = 'Email ou senha incorretos.';
+                    if (error.message.includes('Invalid login')) {
+                        errorMsg = 'Email ou senha incorretos.';
+                    } else if (error.message.includes('Email not confirmed')) {
+                        errorMsg = 'Confirme seu email antes de entrar.';
+                    } else {
+                        errorMsg = error.message;
+                    }
+                    showMessage(msg, errorMsg, 'error');
+                    return;
+                }
+
+                if (user) {
+                    const { profile } = await getUser();
+                    const userName = profile?.name || 'Professor';
+                    showMessage(msg, `Bem-vindo ao UNIVERSUS, ${userName}!`, 'success');
+
+                    setTimeout(() => {
+                        window.location.href = 'pagina-inicial.html';
+                    }, 1000);
+                }
+            } catch (err) {
+                console.error('Erro no login:', err);
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+                showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
+            }
+        });
+
+        // ===== AUTO-LOGIN CHECK (runs AFTER all listeners are set up) =====
+        (async () => {
+            // First check student nickname (direct localStorage, no dependencies)
+            const nickname = localStorage.getItem('uv_student_nickname');
+            if (nickname) {
+                window.location.href = 'pagina-inicial-aluno.html';
+                return;
+            }
+
+            // Then check teacher Supabase session
+            try {
+                if (typeof _sb !== 'undefined' && _sb) {
+                    const { data: { session } } = await _sb.auth.getSession();
+                    if (session) {
+                        const { data: { user } } = await _sb.auth.getUser();
+                        if (user) {
+                            // Has a valid session — go to teacher page
+                            window.location.href = 'pagina-inicial.html';
+                            return;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.log('Auto-login check failed:', err);
+            }
+        })();
+    </script>
+</body>
+</html>

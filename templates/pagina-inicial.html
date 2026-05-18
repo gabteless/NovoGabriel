@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVERSUS — Quiz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js';"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden; color: #e2e8f0;
+        }
+        .stars-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .nebula { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(120px); opacity: 0.15; pointer-events: none; }
+        .nebula-1 { top: -200px; left: -100px; background: #6a0dad; }
+        .nebula-2 { bottom: -200px; right: -100px; background: #1e90ff; }
+        .nebula-3 { top: 50%; left: 50%; transform: translate(-50%,-50%); background: #ff1493; opacity: 0.07; }
+        .title {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            font-size: 2.5rem; font-weight: 900; letter-spacing: 0.8rem;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
+            background-size: 300% 300%;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: gs 6s ease infinite; user-select: none; z-index: 10;
+        }
+        @keyframes gs { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .settings-btn {
+            position: fixed; top: 25px; right: 25px; z-index: 20;
+            width: 42px; height: 42px; border-radius: 50%;
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.3s, transform 0.3s;
+        }
+        .settings-btn:hover { background: rgba(255,255,255,0.15); transform: rotate(90deg); }
+        .settings-btn svg { width: 20px; height: 20px; fill: #a78bfa; }
+        .settings-panel {
+            position: fixed; top: 0; right: -350px; width: 320px; height: 100vh;
+            background: rgba(15,15,30,0.95); backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255,255,255,0.1); z-index: 30; padding: 30px 25px;
+            transition: right 0.4s cubic-bezier(0.4,0,0.2,1); overflow-y: auto;
+        }
+        .settings-panel.open { right: 0; }
+        .settings-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 25; opacity: 0;
+            pointer-events: none; transition: opacity 0.4s;
+        }
+        .settings-overlay.open { opacity: 1; pointer-events: all; }
+        .settings-panel h3 {
+            color: #a78bfa; font-size: 1.1rem; margin-bottom: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .settings-panel h3 .cb {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); border: none;
+            color: #e2e8f0; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 1.1rem;
+        }
+        .si { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.9rem; }
+        .si label { color: rgba(255,255,255,0.7); }
+        .sw { position: relative; width: 44px; height: 22px; }
+        .sw input { display: none; }
+        .st { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.15); border-radius: 11px; cursor: pointer; transition: background 0.3s; }
+        .sw input:checked + .st { background: #7c3aed; }
+        .sf { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: white; border-radius: 50%; pointer-events: none; transition: transform 0.3s; }
+        .sw input:checked ~ .sf { transform: translateX(22px); }
+        .app-container { display: flex; height: 100vh; padding-top: 90px; }
+        .sidebar { width: 280px; min-width: 280px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .main-content { flex: 1; padding: 15px 25px; overflow-y: auto; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+            border-radius: 12px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06); cursor: pointer;
+            transition: background 0.3s, border-color 0.3s; user-select: none;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.08); }
+        .nav-item.active { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.3); }
+        .nav-item svg { width: 22px; height: 22px; fill: #a78bfa; }
+        .nav-item span { font-size: 0.9rem; color: rgba(255,255,255,0.8); }
+        .ccard {
+            margin-top: 10px; padding: 16px; border-radius: 12px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); text-align: center;
+        }
+        .ccard .cr { width: 120px; height: 120px; min-width: 120px; min-height: 120px; margin: 0 auto 10px; border-radius: 10px; background: rgba(255,255,255,0.03); overflow: hidden; position: relative; }
+        .ccard .cr canvas { width: 120px!important; height: 120px!important; display: block; margin: 0 auto; }
+        .ccard .cn { font-size: 0.9rem; color: #e2e8f0; font-weight: 600; }
+        .ccard .ce { font-size: 0.75rem; color: #a78bfa; cursor: pointer; margin-top: 4px; }
+        .ccard .ce:hover { text-decoration: underline; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .search-box { position: relative; margin-bottom: 25px; }
+        .search-box input {
+            width: 100%; padding: 14px 18px 14px 46px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05);
+            color: #e2e8f0; font-size: 0.95rem; outline: none; transition: border-color 0.3s;
+        }
+        .search-box input::placeholder { color: rgba(255,255,255,0.25); }
+        .search-box input:focus { border-color: #a78bfa; }
+        .search-box svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; fill: rgba(255,255,255,0.3); }
+        .quiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+        .quiz-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 20px; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s, border-color 0.3s;
+        }
+        .quiz-card:hover { transform: translateY(-4px); border-color: rgba(124,58,237,0.3); box-shadow: 0 8px 25px rgba(124,58,237,0.15); }
+        .quiz-card .cat { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin-bottom: 10px; background: rgba(124,58,237,0.2); color: #c4b5fd; }
+        .quiz-card h4 { font-size: 1rem; margin-bottom: 6px; color: #e2e8f0; }
+        .quiz-card p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+        .quiz-card .meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
+        .stat-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 20px; text-align: center;
+        }
+        .stat-card .sv {
+            font-size: 2rem; font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .stat-card .sl { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 4px; }
+        table.rt { width: 100%; border-collapse: collapse; }
+        table.rt th { text-align: left; font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        table.rt td { padding: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+        /* ===== AVATAR EDITOR ===== */
+        .cmo {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 40; display: none;
+            align-items: center; justify-content: center;
+        }
+        .cmo.open { display: flex; }
+        .cm {
+            background: #1a1a2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            width: 780px; max-width: 96vw; max-height: 92vh;
+            display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        .cmh {
+            padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .cmh h3 { color: #e2e8f0; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; }
+        .cmh .bge {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .cmh .bge svg { width: 16px; height: 16px; fill: white; }
+        .cmx {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: rgba(255,255,255,0.08); border: none; color: #e2e8f0;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;
+        }
+        .cmx:hover { background: rgba(255,255,255,0.15); }
+        .cbody { display: flex; flex: 1; overflow: hidden; }
+        .cviewer {
+            width: 270px; min-width: 270px;
+            background: radial-gradient(ellipse at center, #2a2a4e 0%, #1a1a2e 70%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; border-right: 1px solid rgba(255,255,255,0.06);
+        }
+        #avatarView { border-radius: 12px; cursor: grab; }
+        #avatarView:active { cursor: grabbing; }
+        .cname-in {
+            margin-top: 10px; width: 170px; padding: 7px 12px;
+            border: 1px solid rgba(255,255,255,0.12); border-radius: 8px;
+            background: rgba(255,255,255,0.06); color: #e2e8f0;
+            text-align: center; font-size: 0.82rem; outline: none;
+        }
+        .cname-in:focus { border-color: #7c3aed; }
+        .cname-in::placeholder { color: rgba(255,255,255,0.22); }
+        .dh { font-size: 0.62rem; color: rgba(255,255,255,0.2); margin-top: 5px; }
+        .copts { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .ctabs {
+            display: flex; gap: 0; padding: 10px 14px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            overflow-x: auto; flex-shrink: 0;
+        }
+        .ctab {
+            padding: 7px 11px; font-size: 0.72rem; color: rgba(255,255,255,0.3);
+            background: none; border: none; border-bottom: 2px solid transparent;
+            cursor: pointer; white-space: nowrap; transition: color 0.2s, border-color 0.2s;
+            text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500;
+        }
+        .ctab:hover { color: rgba(255,255,255,0.7); }
+        .ctab.on { color: #a78bfa; border-bottom-color: #a78bfa; }
+        .ctc { flex: 1; overflow-y: auto; padding: 18px; }
+        .ctp { display: none; }
+        .ctp.on { display: block; }
+        .og { margin-bottom: 20px; }
+        .og .ol { font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .cr2 { display: flex; gap: 7px; flex-wrap: wrap; }
+        .cb {
+            width: 34px; height: 34px; border-radius: 9px; border: 2.5px solid transparent;
+            cursor: pointer; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .cb:hover { transform: scale(1.12); }
+        .cb.on { border-color: white; transform: scale(1.08); box-shadow: 0 0 10px rgba(255,255,255,0.12); }
+        .sr { display: flex; gap: 7px; flex-wrap: wrap; }
+        .sb {
+            padding: 8px 14px; border-radius: 8px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+            color: rgba(255,255,255,0.5); font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+        }
+        .sb:hover { background: rgba(255,255,255,0.08); }
+        .sb.on { background: rgba(124,58,237,0.18); border-color: rgba(124,58,237,0.5); color: #c4b5fd; }
+        .cmf {
+            padding: 12px 18px; border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex; gap: 8px; justify-content: center; flex-shrink: 0;
+        }
+        .mb { padding: 9px 22px; border: none; border-radius: 9px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .mb:active { transform: scale(0.96); }
+        .mb.ca { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+        .mb.ra { background: rgba(244,114,182,0.15); color: #f472b6; }
+        .mb.sa { background: linear-gradient(135deg, #7c3aed, #3b82f6); color: white; }
+
+        @media (max-width: 700px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; min-width: unset; flex-direction: row; overflow-x: auto; padding: 8px; }
+            .nav-item { min-width: 90px; flex-direction: column; padding: 10px; font-size: 0.7rem; gap: 6px; text-align: center; }
+            .char-card { display: none; }
+            .stats-row { grid-template-columns: 1fr; }
+            .main-content { padding: 10px 15px; }
+            .quiz-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="stars-layer" id="stars1"></canvas>
+    <canvas class="stars-layer" id="stars2"></canvas>
+    <canvas class="stars-layer" id="stars3"></canvas>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+    <h1 class="title">UNIVERSUS</h1>
+
+    <div class="settings-btn" id="openSettings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.6 3.6 0 0112 15.6z"/></svg>
+    </div>
+    <div class="settings-overlay" id="settingsOverlay"></div>
+    <div class="settings-panel" id="settingsPanel">
+        <h3>Configuracoes <button class="cb" id="closeSettings">&times;</button></h3>
+        <div class="si" style="border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:16px;margin-bottom:8px;">
+            <div>
+                <label style="font-weight:600;color:#e2e8f0;" id="settingsUserName">Carregando...</label>
+                <div style="font-size:0.7rem;color:#a78bfa;margin-top:2px;" id="settingsUserRole">Professor</div>
+            </div>
+        </div>
+        <div class="si"><label>Sons</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
+        <div class="si"><label>Temporizador</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
+        <div class="si"><label>Efeitos visuais</label><div class="sw"><input type="checkbox" checked><span class="st"></span><span class="sf"></span></div></div>
+        <div class="si"><label>Dificuldade</label>
+            <select style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:#e2e8f0;border-radius:6px;padding:4px 8px;font-size:0.8rem;">
+                <option>Facil</option><option>Medio</option><option>Dificil</option>
+            </select>
+        </div>
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
+            <button id="logoutBtn" style="width:100%;padding:10px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;transition:background 0.3s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">Sair da conta</button>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="nav-item active" data-panel="search"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><span>Procurar Quiz</span></div>
+            <div class="nav-item" data-panel="reports"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span>Relatorios</span></div>
+            <div class="nav-item" data-panel="create"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Personagem</span></div>
+            <div class="nav-item" data-panel="create-quiz"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg><span>Criar Quiz</span></div>
+            <div class="ccard">
+                <div class="cr" id="charPreviewSidebar"></div>
+                <div class="cn" id="charNameSidebar">Personagem</div>
+                <div class="ce" id="openCharCreator">Editar personagem</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel active" id="panel-search">
+                <div class="search-box"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input type="text" placeholder="Procurar quiz..." id="searchInput"></div>
+                <div class="quiz-grid" id="quizGrid">
+                    <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;" id="quizLoading">Carregando quizzes...</div>
+                </div>
+            </div>
+            <div class="panel" id="panel-reports">
+                <div style="margin-bottom:25px;"><h2 style="font-size:1.3rem;color:#e2e8f0;">Relatorio de Quizzes</h2></div>
+                <div class="stats-row" id="statsRow"><div class="stat-card"><div class="sv" id="statTotal">0</div><div class="sl">Quizzes Criados</div></div><div class="stat-card"><div class="sv" id="statPlayed">0</div><div class="sl">Vezes Jogados</div></div><div class="stat-card"><div class="sv" id="statAvg">0%</div><div class="sl">Taxa Media de Acerto</div></div></div>
+                <table class="rt"><thead><tr><th>Quiz</th><th>Aluno</th><th>Acertos</th><th>Data</th></tr></thead><tbody id="reportsBody">
+                    <tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Carregando...</td></tr>
+                </tbody></table>
+            </div>
+            <div class="panel" id="panel-create">
+                <div style="text-align:center;margin-top:30px;">
+                    <div id="charPreviewPanel" style="width:200px;height:200px;margin:0 auto;border-radius:12px;overflow:hidden;background:rgba(255,255,255,0.03);"></div>
+                    <p style="font-size:0.9rem;color:rgba(255,255,255,0.45);margin:15px 0;">Customize seu personagem</p>
+                    <button class="mb sa" id="openCharCreator2" style="border:none;padding:10px 28px;">Abrir Editor</button>
+                </div>
+            </div>
+            <div class="panel" id="panel-create-quiz">
+                <div style="text-align:center;margin-top:50px;">
+                    <div style="font-size:3rem;margin-bottom:16px;">✨</div>
+                    <h3 style="color:#e2e8f0;font-size:1.1rem;margin-bottom:10px;">Crie seus proprios quizzes!</h3>
+                    <p style="color:rgba(255,255,255,0.4);font-size:0.85rem;margin-bottom:24px;">Monte perguntas, gere um codigo de acesso e compartilhe com seus alunos.</p>
+                    <a href="criar-quiz.html" class="mb sa" style="display:inline-block;padding:12px 32px;border:none;border-radius:10px;color:white;text-decoration:none;font-weight:600;background:linear-gradient(135deg,#7c3aed,#3b82f6);">Criar Novo Quiz</a>
+                    <br><br>
+                    <a href="pagina-delete.html" style="color:rgba(239,68,68,0.7);font-size:0.8rem;text-decoration:none;">Gerenciar / Deletar quizzes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Editor Modal -->
+    <div class="cmo" id="charModal">
+        <div class="cm">
+            <div class="cmh"><h3><span class="bge"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></span>Editar Personagem</h3><button class="cmx" id="charCancel">&times;</button></div>
+            <div class="cbody">
+                <div class="cviewer"><canvas id="avatarView"></canvas><input type="text" class="cname-in" id="charNameInput" placeholder="Nome do heroi..."><div class="dh">Arraste para rotacionar</div></div>
+                <div class="copts">
+                    <div class="ctabs">
+                        <button class="ctab on" data-tab="tabFace">Rosto</button>
+                        <button class="ctab" data-tab="tabHair">Cabelo</button>
+                        <button class="ctab" data-tab="tabEyes">Olhos</button>
+                        <button class="ctab" data-tab="tabNose">Nariz</button>
+                        <button class="ctab" data-tab="tabMouth">Boca</button>
+                        <button class="ctab" data-tab="tabOut">Roupa</button>
+                    </div>
+                    <div class="ctc">
+                        <div class="ctp on" id="tabFace">
+                            <div class="og"><div class="ol">Cor da Pele</div><div class="cr2" id="skC"></div></div>
+                            <div class="og"><div class="ol">Formato do Rosto</div><div class="sr" id="skS"></div></div>
+                        </div>
+                        <div class="ctp" id="tabHair">
+                            <div class="og"><div class="ol">Cor do Cabelo</div><div class="cr2" id="hrC"></div></div>
+                            <div class="og"><div class="ol">Estilo do Cabelo</div><div class="sr" id="hrS"></div></div>
+                        </div>
+                        <div class="ctp" id="tabEyes">
+                            <div class="og"><div class="ol">Cor dos Olhos</div><div class="cr2" id="eyC"></div></div>
+                            <div class="og"><div class="ol">Formato</div><div class="sr" id="eyS"></div></div>
+                        </div>
+                        <div class="ctp" id="tabNose">
+                            <div class="og"><div class="ol">Estilo do Nariz</div><div class="sr" id="nsS"></div></div>
+                        </div>
+                        <div class="ctp" id="tabMouth">
+                            <div class="og"><div class="ol">Estilo da Boca</div><div class="sr" id="mtS"></div></div>
+                        </div>
+                        <div class="ctp" id="tabOut">
+                            <div class="og"><div class="ol">Cor da Roupa</div><div class="cr2" id="shC"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="cmf">
+                <button class="mb ra" id="charRand">&#x1f3b2; Aleatorio</button>
+                <button class="mb ca" id="charDiscard">Cancelar</button>
+                <button class="mb sa" id="charSave">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Stars
+    function genStars(id,n,sz,sp){
+        const c=document.getElementById(id),x=c.getContext('2d');
+        c.width=innerWidth;c.height=innerHeight;
+        const s=[];for(let i=0;i<n;i++)s.push({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*sz+0.5,a:Math.random()*0.8+0.2,t:Math.random()*0.02+0.005});
+        let tm=0;
+        (function d(){x.clearRect(0,0,c.width,c.height);tm+=sp;s.forEach(p=>{const a=p.a*(0.6+0.4*Math.sin(tm*p.t*10));x.beginPath();x.arc(p.x,p.y,p.r,0,Math.PI*2);x.fillStyle=`rgba(255,255,255,${a})`;x.fill()});requestAnimationFrame(d)})();
+        addEventListener('resize',()=>{c.width=innerWidth;c.height=innerHeight});
+    }
+    genStars('stars1',200,1.2,0.3);genStars('stars2',100,1.8,0.2);genStars('stars3',50,2.5,0.1);
+
+    // Nav
+    document.querySelectorAll('.nav-item').forEach(it=>it.onclick=()=>{
+        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+        it.classList.add('active');
+        document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+        document.getElementById('panel-'+it.dataset.panel).classList.add('active');
+    });
+
+    // Settings
+    const sO=document.getElementById('openSettings'),sP=document.getElementById('settingsPanel'),sOv=document.getElementById('settingsOverlay');
+    sO.onclick=()=>{sP.classList.add('open');sOv.classList.add('open');};
+    document.getElementById('closeSettings').onclick=document.getElementById('settingsOverlay').onclick=()=>{sP.classList.remove('open');sOv.classList.remove('open');};
+
+    // Search
+    document.getElementById('searchInput').oninput=function(){const q=this.value.toLowerCase();document.querySelectorAll('.quiz-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'block':'none';});};
+
+    // Tab switch
+    document.querySelectorAll('.ctab').forEach(t=>t.onclick=()=>{
+        document.querySelectorAll('.ctab').forEach(x=>x.classList.remove('on'));
+        document.querySelectorAll('.ctp').forEach(x=>x.classList.remove('on'));
+        t.classList.add('on');document.getElementById(t.dataset.tab).classList.add('on');
+    });
+
+    // ===== AVATAR BUILDER =====
+    const P = {
+        sk:'#f4c595', fs:'oval', hc:'#8b4513', hs:'short',
+        ec:'#8b4513', es:'normal', ns:'small', ms:'smile', sc:'#7c3aed'
+    };
+
+    // Three.js setup
+    let S,Cam,R,G,drag=false,pm={x:0,y:0},rY=0,rX=0;
+    const AV=280, AH=280;
+
+    function setupAV(){
+        const cv=document.getElementById('avatarView');
+        cv.width=AV*1.5; cv.height=AH*1.5;
+        cv.style.width=AV+'px'; cv.style.height=AH+'px';
+
+        S=new THREE.Scene();
+        Cam=new THREE.PerspectiveCamera(35,AV/AH,0.1,50);
+        Cam.position.set(0,0.2,4);
+
+        R=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+        R.setSize(AV*1.5,AH*1.5);
+        R.setPixelRatio(1);
+        R.setClearColor(0,0);
+
+        S.add(new THREE.AmbientLight(0x6060a0,0.65));
+        const dl=new THREE.DirectionalLight(0xffffff,0.95);
+        dl.position.set(3,4,4);
+        S.add(dl);
+        const fl=new THREE.DirectionalLight(0x7c3aed,0.25);
+        fl.position.set(-3,2,2);
+        S.add(fl);
+        G=new THREE.Group();
+        S.add(G);
+
+        buildAvatar();
+
+        // Mouse
+        cv.onmousedown=e=>{drag=true;pm={x:e.clientX,y:e.clientY};};
+        window.onmousemove=e=>{if(!drag)return;rY+=(e.clientX-pm.x)*0.008;rX+=(e.clientY-pm.y)*0.006;rX=Math.max(-0.6,Math.min(0.6,rX));pm={x:e.clientX,y:e.clientY};};
+        window.onmouseup=()=>{drag=false;};
+        cv.ontouchstart=e=>{drag=true;pm={x:e.touches[0].clientX,y:e.touches[0].clientY};};
+        window.ontouchmove=e=>{if(!drag||!e.touches[0])return;rY+=(e.touches[0].clientX-pm.x)*0.008;rX+=(e.touches[0].clientY-pm.y)*0.006;rX=Math.max(-0.6,Math.min(0.6,rX));pm={x:e.touches[0].clientX,y:e.touches[0].clientY};};
+        window.ontouchend=()=>{drag=false;};
+
+        (function anim(){requestAnimationFrame(anim);if(!drag)rY+=0.004;G.rotation.y+=(rY-G.rotation.y)*0.08;G.rotation.x+=(rX-G.rotation.x)*0.08;R.render(S,Cam);})();
+    }
+
+    function M(c,sh=25){return new THREE.MeshPhongMaterial({color:new THREE.Color(c),shininess:sh});}
+
+    function buildAvatar(){
+        while(G.children.length)G.remove(G.children[0]);
+        const sk=M(P.sk,30), hr=M(P.hc,12), sh=M(P.sc,18), ew=M(0xffffff,60);
+        const ir=M(P.ec,70), pu=new THREE.MeshBasicMaterial({color:0x111111});
+        const wt=new THREE.MeshBasicMaterial({color:0xffffff});
+        const br=M(P.hc), mt=new THREE.MeshPhongMaterial({color:0xc0392b});
+
+        // Body
+        const bd=new THREE.Mesh(new THREE.CylinderGeometry(0.48,0.40,0.85,16),sh);
+        bd.position.y=-1.5;G.add(bd);
+        // Shoulders
+        const sg=new THREE.SphereGeometry(0.12,10,10);
+        [-0.55,0.55].forEach(x=>{const s=new THREE.Mesh(sg,sh);s.position.set(x,-1.0,0);s.scale.set(1.2,0.85,0.9);G.add(s);});
+
+        // Neck
+        const nk=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.15,0.22,10),sk);
+        nk.position.y=-0.9;G.add(nk);
+
+        // Head
+        const HD=0.62;
+        let hg;
+        if(P.fs==='oval') hg=new THREE.SphereGeometry(HD,24,24);
+        else if(P.fs==='round') hg=new THREE.SphereGeometry(HD*1.06,24,24);
+        else hg=new THREE.SphereGeometry(HD*0.95,24,24,0,Math.PI*2,0,Math.PI); // angular = flatter top/bottom
+
+        const hd=new THREE.Mesh(hg,sk);
+        hd.position.y=-0.15;
+        hd.castShadow=true;
+        G.add(hd);
+
+        // Ears
+        const eg=new THREE.SphereGeometry(0.09,8,8);
+        [-1,1].forEach(side=>{
+            const e=new THREE.Mesh(eg,sk.clone());
+            e.position.set(side*0.6, -0.12, 0.05);
+            e.scale.set(0.5,0.9,0.65);
+            G.add(e);
+        });
+
+        // Eyes
+        const EX=0.2, EY=-0.05, EZ=0.5;
+        const eSz=P.es==='big'?0.14:0.11;
+        const eSY=P.es==='sleepy'?0.4:1;
+
+        [-EX,EX].forEach((x,i)=>{
+            const ew2=new THREE.Mesh(new THREE.SphereGeometry(eSz,14,14),ew.clone());
+            ew2.position.set(x,EY,EZ*eSz*5.5);
+            ew2.scale.set(1,eSY,0.55);
+            G.add(ew2);
+            // Iris
+            const ir2=new THREE.Mesh(new THREE.SphereGeometry(eSz*0.6,12,12),ir.clone());
+            ir2.position.set(0,0,eSz*0.55);
+            ew2.add(ir2);
+            // Pupil
+            const pu2=new THREE.Mesh(new THREE.SphereGeometry(eSz*0.3,10,10),pu.clone());
+            pu2.position.set(0,0,eSz*0.5);
+            ew2.add(pu2);
+            // Shine
+            const sh2=new THREE.Mesh(new THREE.SphereGeometry(eSz*0.18,6,6),wt.clone());
+            sh2.position.set(-0.02,eSz*0.2,eSz*0.65);
+            ew2.add(sh2);
+        });
+
+        // Eyebrows
+        const bg=new THREE.BoxGeometry(0.19,0.032,0.03);
+        const by=P.es==='sleepy'?EY+0.01:EY+0.1;
+        const bz=P.es==='sleepy'?EZ*0.7:0.52;
+        const brL=new THREE.Mesh(bg,br);
+        brL.position.set(-EX,by,bz);
+        brL.rotation.z=P.es==='sleepy'?0.12:-0.08;
+        G.add(brL);
+        const brR=new THREE.Mesh(bg.clone(),br.clone());
+        brR.position.set(EX,by,bz);
+        brR.rotation.z=P.es==='sleepy'?-0.12:0.08;
+        G.add(brR);
+
+        // Nose
+        let ng;
+        if(P.ns==='small') ng=new THREE.SphereGeometry(0.05,10,10);
+        else if(P.ns==='big') ng=new THREE.SphereGeometry(0.08,10,10);
+        else ng=new THREE.ConeGeometry(0.035,0.14,10);
+
+        const ns2=new THREE.Mesh(ng,sk.clone());
+        ns2.position.set(0,-0.14,0.62);
+        if(P.ns==='pointy')ns2.rotation.x=Math.PI/2;
+        G.add(ns2);
+
+        // Mouth
+        const MY=-0.38;
+        if(P.ms==='smile'){
+            // Use torus for smile arc
+            const mg=new THREE.TorusGeometry(0.13,0.022,8,16,Math.PI);
+            const mm=new THREE.Mesh(mg,mt);
+            mm.position.set(0,MY,0.52);
+            mm.rotation.x=Math.PI;mm.rotation.z=Math.PI;
+            G.add(mm);
+        }else if(P.ms==='open'){
+            const mg=new THREE.SphereGeometry(0.1,12,8);
+            const mm=new THREE.Mesh(mg,mt);
+            mm.position.set(0,MY,0.5);mm.rotation.x=Math.PI;mm.scale.set(1.1,0.7,0.6);
+            G.add(mm);
+        }else{
+            const mg=new THREE.BoxGeometry(0.2,0.02,0.03);
+            const mm=new THREE.Mesh(mg,mt);
+            mm.position.set(0,MY,0.5);
+            G.add(mm);
+        }
+
+        // Hair
+        if(P.hs!=='bald'){
+            if(P.hs==='short'){
+                const ht=new THREE.Mesh(new THREE.SphereGeometry(0.66,20,20,0,Math.PI*2,0,Math.PI*0.55),hr);
+                ht.position.set(0,-0.05,-0.02);G.add(ht);
+                // Top bump
+                const hb=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16,0,Math.PI*2,0,Math.PI*0.4),hr);
+                hb.position.set(0,0.2,-0.06);G.add(hb);
+                // Front bangs
+                const fb=new THREE.Mesh(new THREE.SphereGeometry(0.6,16,8,0,0.8,0,0.4),hr);
+                fb.position.set(0,0.05,0.15);fb.rotation.x=0.3;G.add(fb);
+            }else if(P.hs==='long'){
+                const ht=new THREE.Mesh(new THREE.SphereGeometry(0.68,20,20,0,Math.PI*2,0,Math.PI*0.55),hr);
+                ht.position.set(0,-0.03,-0.02);G.add(ht);
+                const hb=new THREE.Mesh(new THREE.SphereGeometry(0.48,16,16,0,Math.PI*2,0,Math.PI*0.4),hr);
+                hb.position.set(0,0.22,-0.06);G.add(hb);
+                // Side panels
+                const lsp=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.08,1.2,10),hr);
+                lsp.position.set(-0.6,-0.8,-0.05);G.add(lsp);
+                const rsp=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.08,1.2,10),hr);
+                rsp.position.set(0.6,-0.8,-0.05);G.add(rsp);
+            }else if(P.hs==='mohawk'){
+                const mh=new THREE.Mesh(new THREE.BoxGeometry(0.13,0.75,0.6,1,6,1),hr);
+                mh.position.set(0,0.18,-0.08);G.add(mh);
+            }else if(P.hs==='spiky'){
+                [[-0.25,0.28,-0.05],[-0.1,0.08,0.12],[0,0.4,-0.02],[0.1,0.08,0.12],[0.25,0.28,-0.05]].forEach(p=>{
+                    const sp2=new THREE.Mesh(new THREE.ConeGeometry(0.09,0.28,8),hr);
+                    sp2.position.set(...p);G.add(sp2);
+                });
+                const base=new THREE.Mesh(new THREE.SphereGeometry(0.64,20,20,0,Math.PI*2,0,Math.PI*0.5),hr);
+                base.position.set(0,-0.05,-0.02);G.add(base);
+            }else if(P.hs==='curly'){
+                const base=new THREE.Mesh(new THREE.SphereGeometry(0.68,20,20,0,Math.PI*2,0,Math.PI*0.5),hr);
+                base.position.set(0,-0.02,-0.02);G.add(base);
+                for(let i=0;i<12;i++){
+                    const angle=Math.random()*Math.PI;
+                    const phi=Math.random()*Math.PI*0.5;
+                    const r=0.65+Math.random()*0.1;
+                    const cx=r*Math.sin(phi)*Math.cos(angle);
+                    const cy=r*Math.cos(phi)+0.1;
+                    const cz=r*Math.sin(phi)*Math.sin(angle);
+                    const c=new THREE.Mesh(new THREE.SphereGeometry(0.1+Math.random()*0.08,8,8),hr);
+                    c.position.set(cx,cy,cz);G.add(c);
+                }
+            }
+        }
+
+        // Cheek blush
+        const bl=new THREE.MeshBasicMaterial({color:0xffaaaa,transparent:true,opacity:0.12});
+        [-1,1].forEach(s=>{
+            const b=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),bl);
+            b.position.set(s*0.25,-0.2,0.45);b.scale.set(1,0.6,0.3);
+            G.add(b);
+        });
+
+        // Center
+        G.position.y=0.4;
+    }
+
+    // Mini preview - renders to offscreen canvas from main Three.js setup
+    function updateMiniPreviews(){
+        if(!R)return;
+        // Render one frame at current rotation
+        R.render(S,Cam);
+        // Get the canvas as image
+        const img=R.domElement.toDataURL('image/png');
+        // Update sidebar card
+        const sb=document.getElementById('charPreviewSidebar');
+        if(sb&&!sb.querySelector('img')){
+            const im=document.createElement('img');
+            im.src=img;im.style.cssText='width:100%;height:100%;object-fit:cover;display:block;';
+            sb.removeChild(sb.querySelector('canvas')||sb.firstElementChild);
+            sb.appendChild(im);
+        }
+        // Update panel card
+        const pn=document.getElementById('charPreviewPanel');
+        if(pn&&!pn.querySelector('img')){
+            const im=document.createElement('img');
+            im.src=img;im.style.cssText='width:200px;height:200px;object-fit:cover;display:block;margin:0 auto;';
+            pn.removeChild(pn.querySelector('canvas')||pn.firstElementChild);
+            pn.appendChild(im);
+        }
+    }
+
+    // Color/Shape options setup
+    const skinC=['#fde0c0','#f4c595','#d4956b','#a0654a','#6b3e2e','#3d2218'];
+    const hairC=['#1a1a1a','#2c1b18','#8b4513','#d4a24b','#c0392b','#f39c12','#e8e8e8','#a78bfa','#3b82f6'];
+    const eyeC=['#1a1a1a','#8b4513','#3b82f6','#22c55e','#06b6d4','#8b5cf6','#f59e0b'];
+    const shirtC=['#7c3aed','#3b82f6','#22c55e','#ef4444','#f59e0b','#ec4899','#06b6d4','#1a1a1a','#e8e8e8'];
+
+    function colors(id,arr,val,set){
+        const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+        arr.forEach(c=>{
+            const b=document.createElement('button');
+            b.className='cb'+(c===val?' on':'');
+            b.style.background=c;
+            b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');P[set]=c;buildAvatar();updMinis();};
+            el.appendChild(b);
+        });
+    }
+    function shapes(id,arr,val,set){
+        const el=document.getElementById(id);if(!el)return;el.innerHTML='';
+        arr.forEach(o=>{
+            const b=document.createElement('button');
+            b.className='sb'+(o.v===val?' on':'');
+            b.textContent=o.l;
+            b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');P[set]=o.v;buildAvatar();updMinis();};
+            el.appendChild(b);
+        });
+    }
+
+    // ===== MINI PREVIEWS =====
+    const miniScenes = {};
+
+    function addMini(id, ch, w, h) {
+        const el = document.getElementById(id);
+        if (!el || el.querySelector('canvas')) return;
+
+        const sc = new THREE.Scene();
+        const cm = new THREE.PerspectiveCamera(40, w / h, 0.1, 50);
+        cm.position.set(0, 0.3, 3);
+
+        const rn = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        rn.setSize(w, h);
+        rn.setClearColor(0, 0);
+        el.appendChild(rn.domElement);
+
+        sc.add(new THREE.AmbientLight(0x6060a0, 0.7));
+        const d = new THREE.DirectionalLight(0xffffff, 1.0);
+        d.position.set(2, 4, 3);
+        sc.add(d);
+
+        const gr = new THREE.Group();
+        sc.add(gr);
+
+        // Build character in the group
+        const oldP = { ...P };
+        Object.assign(P, ch);
+        // Temporarily use gr as the global G
+        const savedG = G;
+        const savedS = S;
+        const savedCam = Cam;
+        const savedR = R;
+        G = gr;
+        S = sc;
+        buildAvatar();
+        G.position.y = 0.4;
+        G.scale.set(0.6, 0.6, 0.6);
+        G = savedG;
+        S = savedS;
+
+        miniScenes[id] = { scene: sc, cam: cm, renderer: rn, group: gr, char: { ...ch } };
+
+        (function anim() {
+            requestAnimationFrame(anim);
+            gr.rotation.y += 0.01;
+            rn.render(sc, cm);
+        })();
+    }
+
+    function rebuildMini(id) {
+        const m = miniScenes[id];
+        if (!m) return;
+        const { scene, group, char } = m;
+        const ch = { ...char };
+        const savedG = G;
+        G = group;
+        Object.assign(P, ch);
+        buildAvatar();
+        G.position.y = 0.4;
+        G.scale.set(0.6, 0.6, 0.6);
+        G = savedG;
+    }
+
+    function updMinis() {
+        Object.keys(miniScenes).forEach(id => {
+            miniScenes[id].char = { ...P };
+            rebuildMini(id);
+        });
+    }
+
+    // Init mini previews
+    const miniInits = [
+        { id: 'charPreviewSidebar', w: 120, h: 120 },
+        { id: 'charPreviewPanel', w: 200, h: 200 }
+    ];
+
+    function initMinis() {
+        if (typeof THREE === 'undefined') { setTimeout(initMinis, 100); return; }
+        miniInits.forEach(m => addMini(m.id, { ...P }, m.w, m.h));
+    }
+
+    if (document.readyState === 'complete') { initMinis(); }
+    else { window.addEventListener('load', () => { initMinis(); }); }
+
+    function openModal(){
+        colors('skC',skinC,P.sk,'sk');
+        shapes('skS',[{l:'Oval',v:'oval'},{l:'Redondo',v:'round'},{l:'Anguloso',v:'square'}],P.sk,'fs');
+        colors('hrC',hairC,P.hc,'hc');
+        shapes('hrS',[{l:'Curto',v:'short'},{l:'Longo',v:'long'},{l:'Moicano',v:'mohawk'},{l:'Espetado',v:'spiky'},{l:'Cacheado',v:'curly'},{l:'Careca',v:'bald'}],P.hs,'hs');
+        colors('eyC',eyeC,P.ec,'ec');
+        shapes('eyS',[{l:'Normal',v:'normal'},{l:'Grande',v:'big'},{l:'Sonolento',v:'sleepy'}],P.es,'es');
+        shapes('nsS',[{l:'Pequeno',v:'small'},{l:'Grande',v:'big'},{l:'Ponteagudo',v:'pointy'}],P.ns,'ns');
+        shapes('mtS',[{l:'Sorriso',v:'smile'},{l:'Neutro',v:'neutral'},{l:'Aberta',v:'open'}],P.ms,'ms');
+        colors('shC',shirtC,P.sc,'sc');
+        document.getElementById('charNameInput').value=P.name||'';
+        document.getElementById('charModal').classList.add('open');
+        setTimeout(()=>{
+            if(!R){setupAV();}else{rY=0;rX=0;buildAvatar();}
+        },80);
+    }
+
+    function saveChar(){
+        const n=document.getElementById('charNameInput').value.trim()||'Personagem';
+        P.name=n;
+        localStorage.setItem('uv_char',JSON.stringify(P));
+        document.getElementById('charNameSidebar').textContent=n;
+        updMinis();
+        // Salvar no Supabase
+        if (typeof saveAvatarConfig === 'function') {
+            saveAvatarConfig(P).catch(err => console.log('Avatar save error:', err));
+        }
+    }
+
+    document.getElementById('openCharCreator').onclick=openModal;
+    document.getElementById('openCharCreator2').onclick=openModal;
+    ['charCancel','charDiscard'].forEach(id=>document.getElementById(id).onclick=()=>document.getElementById('charModal').classList.remove('open'));
+    document.getElementById('charSave').onclick=()=>{saveChar();document.getElementById('charModal').classList.remove('open');};
+    document.getElementById('charRand').onclick=()=>{
+        const r=a=>a[Math.floor(Math.random()*a.length)];
+        P.sk=r(skinC);P.fs=r(['oval','round','square']);P.hc=r(hairC);
+        P.hs=r(['short','long','mohawk','spiky','curly','bald']);
+        P.ec=r(eyeC);P.es=r(['normal','big','sleepy']);
+        P.ns=r(['small','big','pointy']);P.ms=r(['smile','neutral','open']);
+        P.sc=r(shirtC);
+        document.getElementById('charNameInput').value='';
+        buildAvatar();updMinis();
+        // Rebuild UI
+        openModal();
+    };
+
+    // Init
+    const saved=localStorage.getItem('uv_char');
+    if(saved)Object.assign(P,JSON.parse(saved));
+    document.getElementById('charNameSidebar').textContent=P.name||'Personagem';
+
+    // ===== SUPABASE INTEGRATION =====
+    (async function initPage() {
+        if (typeof _sb === 'undefined' || !_sb) {
+            console.error('Supabase nao inicializado');
+            return;
+        }
+
+        // Check if user is logged in
+        let currentUser = null;
+        let currentProfile = null;
+
+        try {
+            const { data: { session } } = await _sb.auth.getSession();
+            if (!session) {
+                // No session at all — redirect to login
+                window.location.href = 'tela-login.html';
+                return;
+            }
+
+            // We have a session, try to get user and profile
+            const { user, profile } = await getUser();
+            currentUser = user;
+            currentProfile = profile;
+
+            if (!currentUser) {
+                window.location.href = 'tela-login.html';
+                return;
+            }
+
+            // If profile exists but not professor, redirect
+            if (currentProfile && currentProfile.role !== 'professor') {
+                window.location.href = 'pagina-inicial-aluno.html';
+                return;
+            }
+
+            // If no profile, use user metadata as fallback
+            if (!currentProfile) {
+                const meta = currentUser.user_metadata || {};
+                currentProfile = {
+                    name: meta.name || 'Professor',
+                    role: meta.role || 'professor',
+                    email: currentUser.email
+                };
+            }
+        } catch (err) {
+            console.error('Auth check error:', err);
+            // If we can't check auth, just show the page with defaults
+            currentProfile = { name: 'Professor', role: 'professor' };
+        }
+
+        document.getElementById('settingsUserName').textContent = currentProfile.name || 'Professor';
+        document.getElementById('settingsUserRole').textContent = 'Professor';
+
+        if (currentProfile.avatar_config && Object.keys(currentProfile.avatar_config).length > 0) {
+            Object.assign(P, currentProfile.avatar_config);
+            localStorage.setItem('uv_char', JSON.stringify(P));
+            document.getElementById('charNameSidebar').textContent = P.name || 'Personagem';
+            if (typeof buildAvatar === 'function' && G) { buildAvatar(); }
+            if (typeof updMinis === 'function') { updMinis(); }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await signOut();
+        });
+
+        await loadQuizzes();
+        await loadReports();
+    })();
+
+    async function loadQuizzes() {
+        const grid = document.getElementById('quizGrid');
+        try {
+            const { data: quizzes, error } = await getMyQuizzes();
+            if (error) throw error;
+
+            if (!quizzes || quizzes.length === 0) {
+                grid.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;"><div style="font-size:2rem;margin-bottom:12px;">📝</div>Nenhum quiz criado ainda.<br><a href="criar-quiz.html" style="color:#a78bfa;text-decoration:none;font-weight:600;">Crie seu primeiro quiz</a></div>';
+                return;
+            }
+
+            grid.innerHTML = quizzes.map(q => {
+                const qCount = q.questions?.[0]?.count || 0;
+                return `<div class="quiz-card" onclick="window.location.href='criar-quiz.html?edit=${q.id}'">
+                    <span class="cat">${esc(q.category)}</span>
+                    <h4>${esc(q.title)}</h4>
+                    <p>${esc(q.description) || 'Sem descricao'}</p>
+                    <div class="meta">
+                        <span>${qCount} perguntas</span>
+                        <span>${q.difficulty}</span>
+                    </div>
+                    ${q.access_code ? '<div style="margin-top:8px;font-size:0.7rem;color:#a78bfa;">Codigo: '+q.access_code+'</div>' : ''}
+                </div>`;
+            }).join('');
+
+            // Re-bind search
+            document.getElementById('searchInput').oninput = function() {
+                const query = this.value.toLowerCase();
+                document.querySelectorAll('.quiz-card').forEach(c => {
+                    c.style.display = c.textContent.toLowerCase().includes(query) ? 'block' : 'none';
+                });
+            };
+        } catch (err) {
+            grid.innerHTML = '<div style="text-align:center;padding:40px;color:#fca5a5;grid-column:1/-1;">Erro ao carregar quizzes</div>';
+            console.error(err);
+        }
+    }
+
+    function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    async function loadReports() {
+        try {
+            const { data: quizzes } = await getMyQuizzes();
+            const { data: attempts } = await getAttemptsForMyQuizzes();
+
+            document.getElementById('statTotal').textContent = quizzes?.length || 0;
+            document.getElementById('statPlayed').textContent = attempts?.length || 0;
+
+            if (attempts && attempts.length > 0) {
+                const avgRate = Math.round(attempts.reduce((acc, a) => acc + (a.total_questions > 0 ? (a.correct_answers / a.total_questions) * 100 : 0), 0) / attempts.length);
+                document.getElementById('statAvg').textContent = avgRate + '%';
+
+                const tbody = document.getElementById('reportsBody');
+                tbody.innerHTML = attempts.slice(0, 20).map(a => {
+                    const date = new Date(a.completed_at).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'});
+                    const quizTitle = a.quizzes?.title || 'Quiz';
+                    const studentName = a.profiles?.name || 'Aluno';
+                    return `<tr><td>${esc(quizTitle)}</td><td>${esc(studentName)}</td><td>${a.correct_answers}/${a.total_questions}</td><td>${date}</td></tr>`;
+                }).join('');
+            } else {
+                document.getElementById('reportsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Nenhum resultado ainda</td></tr>';
+            }
+        } catch (err) {
+            console.error('Reports error:', err);
+        }
+    }
+    </script>
+</body>
+</html>

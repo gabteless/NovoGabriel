@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVERSUS — Calculadora</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden;
+        }
+
+        /* Stars layers */
+        .stars-layer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+
+        /* Nebula glows */
+        .nebula {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .nebula-1 { top: -200px; left: -100px; background: #6a0dad; }
+        .nebula-2 { bottom: -200px; right: -100px; background: #1e90ff; }
+        .nebula-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); background: #ff1493; opacity: 0.07; }
+
+        /* Title */
+        .title {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 1.2rem;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+            user-select: none;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Calculator */
+        .calculator {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            width: 340px;
+            max-width: 95vw;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .calculator .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        /* Display */
+        .display {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 15px 18px;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+        }
+
+        .display .expression {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            min-height: 1.2em;
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+
+        .display .result {
+            color: #e2e8f0;
+            font-size: 2rem;
+            font-weight: 700;
+            word-break: break-all;
+            line-height: 1.1;
+        }
+
+        /* Buttons grid */
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            font-size: 1.15rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+            user-select: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: #e2e8f0;
+        }
+
+        .btn:active {
+            transform: scale(0.93);
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn.operator {
+            background: rgba(124, 58, 237, 0.2);
+            border-color: rgba(124, 58, 237, 0.3);
+            color: #c4b5fd;
+        }
+
+        .btn.operator:hover {
+            background: rgba(124, 58, 237, 0.35);
+            box-shadow: 0 0 15px rgba(124, 58, 237, 0.2);
+        }
+
+        .btn.equals {
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            border: none;
+            color: white;
+            font-weight: 700;
+        }
+
+        .btn.equals:hover {
+            box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+        }
+
+        .btn.clear {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .btn.clear:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .btn.span-2 {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas class="stars-layer" id="stars1"></canvas>
+    <canvas class="stars-layer" id="stars2"></canvas>
+    <canvas class="stars-layer" id="stars3"></canvas>
+
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+    <div class="nebula nebula-3"></div>
+
+    <h1 class="title">UNIVERSUS</h1>
+
+    <a href="pagina-inicial.html" id="backBtn" style="position:fixed;top:25px;left:25px;z-index:20;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.3s;color:#e2e8f0;text-decoration:none;font-size:1.2rem;" title="Voltar">&#8592;</a>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="supabase-config.js"></script>
+    <script>
+    // Dynamically set back link based on role
+    (async function() {
+        if (typeof getUser === 'function') {
+            const { profile } = await getUser();
+            if (profile) {
+                document.getElementById('backBtn').href = profile.role === 'professor' ? 'pagina-inicial.html' : 'pagina-inicial-aluno.html';
+            }
+        }
+    })();
+    </script>
+
+    <div class="calculator">
+        <p class="subtitle">Calculadora Cosmica</p>
+
+        <div class="display">
+            <div class="expression" id="expression"></div>
+            <div class="result" id="result">0</div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn clear" data-action="clear">AC</button>
+            <button class="btn" data-action="backspace">&#9003;</button>
+            <button class="btn operator" data-value="%">%</button>
+            <button class="btn operator" data-value="/">÷</button>
+
+            <button class="btn" data-value="7">7</button>
+            <button class="btn" data-value="8">8</button>
+            <button class="btn" data-value="9">9</button>
+            <button class="btn operator" data-value="*">×</button>
+
+            <button class="btn" data-value="4">4</button>
+            <button class="btn" data-value="5">5</button>
+            <button class="btn" data-value="6">6</button>
+            <button class="btn operator" data-value="-">−</button>
+
+            <button class="btn" data-value="1">1</button>
+            <button class="btn" data-value="2">2</button>
+            <button class="btn" data-value="3">3</button>
+            <button class="btn operator" data-value="+">+</button>
+
+            <button class="btn" data-value="0" class="span-2">0</button>
+            <button class="btn" data-value=".">.</button>
+            <button class="btn equals" data-action="equals">=</button>
+        </div>
+    </div>
+
+    <script>
+        // Stars (same as UNIVERSUS login)
+        function generateStars(canvasId, count, size, speed) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const stars = [];
+            for (let i = 0; i < count; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    r: Math.random() * size + 0.5,
+                    alpha: Math.random() * 0.8 + 0.2,
+                    twinkleSpeed: Math.random() * 0.02 + 0.005
+                });
+            }
+
+            let time = 0;
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                time += speed;
+                stars.forEach(s => {
+                    const alpha = s.alpha * (0.6 + 0.4 * Math.sin(time * s.twinkleSpeed * 10));
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        }
+
+        generateStars('stars1', 200, 1.2, 0.3);
+        generateStars('stars2', 100, 1.8, 0.2);
+        generateStars('stars3', 50, 2.5, 0.1);
+
+        // Calculator logic
+        const exprDisplay = document.getElementById('expression');
+        const resultDisplay = document.getElementById('result');
+
+        let expression = '';
+        let justEvaluated = false;
+
+        const operators = ['+', '-', '*', '/', '%'];
+
+        function updateDisplay() {
+            const displayExpr = expression
+                .replace(/\*/g, ' × ')
+                .replace(/\//g, ' ÷ ')
+                .replace(/\+/g, ' + ')
+                .replace(/(?<=\d)-/g, ' − ')
+                .replace(/%/g, ' % ');
+            exprDisplay.textContent = displayExpr;
+        }
+
+        function evaluate() {
+            if (!expression) return '0';
+            try {
+                const sanitized = expression.replace(/[^0-9+\-*/.%()]/g, '');
+                const result = Function(`"use strict"; return (${sanitized})`)();
+                if (!isFinite(result)) return 'Erro';
+                const rounded = parseFloat(result.toFixed(10));
+                return String(rounded).replace('.', ',');
+            } catch {
+                return 'Erro';
+            }
+        }
+
+        function handleInput(val) {
+            if (justEvaluated) {
+                if (operators.includes(val)) {
+                    expression = resultDisplay.textContent.replace(',', '.');
+                } else {
+                    expression = '';
+                }
+                justEvaluated = false;
+            }
+
+            if (val === '.' && expression.split(/[\+\-\*\/\%]/).pop().includes('.')) {
+                return;
+            }
+
+            expression += val;
+            updateDisplay();
+
+            const liveResult = evaluate();
+            if (liveResult !== 'Erro') {
+                resultDisplay.textContent = liveResult;
+            }
+        }
+
+        function handleEquals() {
+            if (!expression) return;
+            const result = evaluate();
+            exprDisplay.textContent = expression
+                .replace(/\*/g, ' × ')
+                .replace(/\//g, ' ÷ ')
+                .replace(/\+/g, ' + ')
+                .replace(/%/g, ' % ') + ' =';
+            resultDisplay.textContent = result;
+            expression = result.replace(',', '.');
+            justEvaluated = true;
+        }
+
+        function handleClear() {
+            expression = '';
+            exprDisplay.textContent = '';
+            resultDisplay.textContent = '0';
+            justEvaluated = false;
+        }
+
+        function handleBackspace() {
+            if (justEvaluated) {
+                handleClear();
+                return;
+            }
+            expression = expression.slice(0, -1);
+            updateDisplay();
+            if (expression) {
+                const live = evaluate();
+                if (live !== 'Erro') resultDisplay.textContent = live;
+            } else {
+                resultDisplay.textContent = '0';
+            }
+        }
+
+        // Button events
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = btn.dataset.value;
+                const action = btn.dataset.action;
+
+                if (action === 'clear') return handleClear();
+                if (action === 'backspace') return handleBackspace();
+                if (action === 'equals') return handleEquals();
+                if (val) handleInput(val);
+            });
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') handleInput(e.key);
+            else if (e.key === '.') handleInput('.');
+            else if (e.key === '+') handleInput('+');
+            else if (e.key === '-') handleInput('-');
+            else if (e.key === '*') handleInput('*');
+            else if (e.key === '/') { e.preventDefault(); handleInput('/'); }
+            else if (e.key === '%') handleInput('%');
+            else if (e.key === 'Enter' || e.key === '=') handleEquals();
+            else if (e.key === 'Backspace') handleBackspace();
+            else if (e.key === 'Escape' || e.key === 'Delete') handleClear();
+        });
+    </script>
+</body>
+</html>
