@@ -35,6 +35,16 @@ function Auth() {
     }
   }
 
+  async function handleGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
+    if (error) alert(error.message)
+  }
+
   return (
     <div style={{ padding: 20 }}>
       <h2>{modoLogin ? 'Login' : 'Cadastro'}</h2>
@@ -60,6 +70,12 @@ function Auth() {
       </form>
 
       <br />
+
+      <button onClick={handleGoogle}>
+        Entrar com Google
+      </button>
+
+      <br /><br />
 
       <button onClick={() => setModoLogin(!modoLogin)}>
         {modoLogin ? 'Criar conta' : 'Já tenho conta'}

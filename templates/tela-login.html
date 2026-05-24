@@ -87,6 +87,18 @@
         }
         .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 30px rgba(124,58,237,0.6); }
 
+        .btn-google {
+            background: rgba(255,255,255,0.07);
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.15);
+            transition: background 0.3s, border-color 0.3s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-google:hover {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(167,139,250,0.4);
+        }
+
         .btn-student {
             background: rgba(255,255,255,0.06); color: #e2e8f0;
             border: 1px solid rgba(255,255,255,0.12);
@@ -111,7 +123,6 @@
 
         .hidden { display: none; }
 
-        /* Loading spinner */
         .btn .spinner {
             display: inline-block; width: 18px; height: 18px;
             border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
@@ -120,7 +131,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Separator */
         .separator {
             display: flex; align-items: center; gap: 14px; margin: 24px 0;
             color: rgba(255,255,255,0.2); font-size: 0.8rem;
@@ -129,7 +139,6 @@
             content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.08);
         }
 
-        /* Student nickname input */
         .nickname-input {
             width: 100%; padding: 14px 18px; border-radius: 12px;
             background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
@@ -139,7 +148,6 @@
         .nickname-input:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
         .nickname-input::placeholder { color: rgba(255,255,255,0.2); }
 
-        /* Back link */
         .back-link {
             text-align: center; margin-top: 16px;
         }
@@ -148,7 +156,6 @@
         }
         .back-link a:hover { color: rgba(255,255,255,0.6); }
 
-        /* Role icons */
         .role-choice {
             display: flex; gap: 14px; margin-bottom: 12px;
         }
@@ -208,6 +215,14 @@
             </div>
             <button type="submit" class="btn btn-primary" id="loginBtn">Entrar</button>
         </form>
+
+        <!-- GOOGLE LOGIN -->
+        <div class="separator">ou</div>
+        <button type="button" class="btn btn-google" id="googleLoginBtn">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google">
+            Entrar com Google
+        </button>
+
         <p class="toggle-text">
             Nao tem uma conta? <a id="showRegister">Criar conta</a>
         </p>
@@ -312,7 +327,6 @@
         document.getElementById('choiceTeacher').addEventListener('click', () => showCard(loginCard));
         document.getElementById('choiceStudent').addEventListener('click', () => {
             showCard(studentCard);
-            // Pre-fill if nickname exists
             const saved = localStorage.getItem('uv_student_nickname');
             if (saved) document.getElementById('nicknameInput').value = saved;
             setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
@@ -326,6 +340,31 @@
         document.getElementById('backFromLogin').addEventListener('click', () => showCard(choiceCard));
         document.getElementById('backFromRegister').addEventListener('click', () => showCard(choiceCard));
         document.getElementById('backFromStudent').addEventListener('click', () => showCard(choiceCard));
+
+        // ===== GOOGLE LOGIN =====
+        document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('googleLoginBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span>Redirecionando...';
+
+            try {
+                const { error } = await _sb.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/templates/pagina-inicial.html'
+                    }
+                });
+                if (error) {
+                    showMessage(document.getElementById('loginMsg'), error.message, 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google"> Entrar com Google';
+                }
+            } catch (err) {
+                showMessage(document.getElementById('loginMsg'), 'Erro ao conectar com Google.', 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google"> Entrar com Google';
+            }
+        });
 
         // ===== STUDENT NICKNAME ENTRY =====
         const nicknameInput = document.getElementById('nicknameInput');
@@ -341,7 +380,6 @@
                 showMessage(studentMsg, 'O apelido deve ter pelo menos 2 caracteres.', 'error');
                 return;
             }
-            // Save nickname directly to localStorage
             localStorage.setItem('uv_student_nickname', nickname);
             showMessage(studentMsg, `Bem-vindo, ${nickname}!`, 'success');
             setTimeout(() => {
@@ -366,7 +404,6 @@
             btn.innerHTML = '<span class="spinner"></span>Criando conta...';
 
             try {
-                // Always register as professor
                 const { user, error } = await signUp(email, pass, name, 'professor');
 
                 btn.disabled = false;
@@ -449,23 +486,20 @@
             }
         });
 
-        // ===== AUTO-LOGIN CHECK (runs AFTER all listeners are set up) =====
+        // ===== AUTO-LOGIN CHECK =====
         (async () => {
-            // First check student nickname (direct localStorage, no dependencies)
             const nickname = localStorage.getItem('uv_student_nickname');
             if (nickname) {
                 window.location.href = 'pagina-inicial-aluno.html';
                 return;
             }
 
-            // Then check teacher Supabase session
             try {
                 if (typeof _sb !== 'undefined' && _sb) {
                     const { data: { session } } = await _sb.auth.getSession();
                     if (session) {
                         const { data: { user } } = await _sb.auth.getUser();
                         if (user) {
-                            // Has a valid session — go to teacher page
                             window.location.href = 'pagina-inicial.html';
                             return;
                         }
