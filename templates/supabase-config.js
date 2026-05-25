@@ -84,7 +84,7 @@ async function getUser() {
         id: user.id,
         name: meta.name || 'Usuario',
         email: user.email,
-        role: meta.role || 'aluno'
+        role: meta.role || 'professor'
       })
       .select()
       .single();
