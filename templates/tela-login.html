@@ -148,22 +148,15 @@
         .nickname-input:focus { border-color: #a78bfa; box-shadow: 0 0 15px rgba(167,139,250,0.2); }
         .nickname-input::placeholder { color: rgba(255,255,255,0.2); }
 
-        .back-link {
-            text-align: center; margin-top: 16px;
-        }
-        .back-link a {
-            color: rgba(255,255,255,0.35); cursor: pointer; text-decoration: none; font-size: 0.82rem;
-        }
+        .back-link { text-align: center; margin-top: 16px; }
+        .back-link a { color: rgba(255,255,255,0.35); cursor: pointer; text-decoration: none; font-size: 0.82rem; }
         .back-link a:hover { color: rgba(255,255,255,0.6); }
 
-        .role-choice {
-            display: flex; gap: 14px; margin-bottom: 12px;
-        }
+        .role-choice { display: flex; gap: 14px; margin-bottom: 12px; }
         .role-btn {
             flex: 1; padding: 20px 12px; border-radius: 14px;
             background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08);
-            text-align: center; cursor: pointer;
-            transition: all 0.3s; user-select: none;
+            text-align: center; cursor: pointer; transition: all 0.3s; user-select: none;
         }
         .role-btn:hover { background: rgba(255,255,255,0.08); }
         .role-btn .role-icon { font-size: 2rem; margin-bottom: 8px; }
@@ -181,25 +174,23 @@
 
     <h1 class="title">UNIVERSUS</h1>
 
-    <!-- TELA 1: Escolha Professor ou Aluno -->
     <div class="card" id="choiceCard">
         <h2>Bem-vindo</h2>
         <p class="subtitle">Escolha como deseja entrar</p>
         <div class="role-choice">
             <div class="role-btn" id="choiceTeacher">
-                <div class="role-icon">👨‍🏫</div>
+                <div class="role-icon">&#128104;&#8205;&#127979;</div>
                 <div class="role-label">Professor</div>
                 <div class="role-desc">Email e senha</div>
             </div>
             <div class="role-btn" id="choiceStudent">
-                <div class="role-icon">🎓</div>
+                <div class="role-icon">&#127891;</div>
                 <div class="role-label">Aluno</div>
                 <div class="role-desc">Apenas apelido</div>
             </div>
         </div>
     </div>
 
-    <!-- TELA 2: Login Professor -->
     <div class="card hidden" id="loginCard">
         <h2>Entrar como Professor</h2>
         <p class="subtitle">Use seu email e senha</p>
@@ -211,12 +202,11 @@
             </div>
             <div class="form-group">
                 <label>Senha</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" required>
+                <input type="password" id="loginPassword" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;" required>
             </div>
             <button type="submit" class="btn btn-primary" id="loginBtn">Entrar</button>
         </form>
 
-        <!-- GOOGLE LOGIN -->
         <div class="separator">ou</div>
         <button type="button" class="btn btn-google" id="googleLoginBtn">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google">
@@ -226,10 +216,9 @@
         <p class="toggle-text">
             Nao tem uma conta? <a id="showRegister">Criar conta</a>
         </p>
-        <div class="back-link"><a id="backFromLogin">← Voltar</a></div>
+        <div class="back-link"><a id="backFromLogin">&#8592; Voltar</a></div>
     </div>
 
-    <!-- TELA 3: Registro Professor -->
     <div class="card hidden" id="registerCard">
         <h2>Criar Conta de Professor</h2>
         <p class="subtitle">Junte-se ao UNIVERSUS</p>
@@ -256,10 +245,9 @@
         <p class="toggle-text">
             Ja tem uma conta? <a id="showLogin">Entrar</a>
         </p>
-        <div class="back-link"><a id="backFromRegister">← Voltar</a></div>
+        <div class="back-link"><a id="backFromRegister">&#8592; Voltar</a></div>
     </div>
 
-    <!-- TELA 4: Entrada Aluno (apelido) -->
     <div class="card hidden" id="studentCard">
         <h2>Entrar como Aluno</h2>
         <p class="subtitle">Escolha um apelido para jogar</p>
@@ -268,15 +256,13 @@
             <input type="text" class="nickname-input" id="nicknameInput" placeholder="Seu apelido..." maxlength="25" autofocus>
         </div>
         <button class="btn btn-primary" id="studentEnterBtn">Entrar</button>
-        <div class="back-link"><a id="backFromStudent">← Voltar</a></div>
+        <div class="back-link"><a id="backFromStudent">&#8592; Voltar</a></div>
     </div>
 
-    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="supabase-config.js"></script>
 
     <script>
-        // ===== STARS =====
         function generateStars(canvasId, count, size, speed) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
@@ -303,7 +289,6 @@
         generateStars('stars1',200,1.2,0.3);
         generateStars('stars2',100,1.8,0.2);
 
-        // ===== CARD NAVIGATION =====
         const choiceCard = document.getElementById('choiceCard');
         const loginCard = document.getElementById('loginCard');
         const registerCard = document.getElementById('registerCard');
@@ -323,7 +308,6 @@
             el.textContent = text; el.className = 'message ' + type;
         }
 
-        // Choice buttons
         document.getElementById('choiceTeacher').addEventListener('click', () => showCard(loginCard));
         document.getElementById('choiceStudent').addEventListener('click', () => {
             showCard(studentCard);
@@ -332,11 +316,8 @@
             setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
         });
 
-        // Toggle login/register
         document.getElementById('showRegister').addEventListener('click', () => showCard(registerCard));
         document.getElementById('showLogin').addEventListener('click', () => showCard(loginCard));
-
-        // Back buttons
         document.getElementById('backFromLogin').addEventListener('click', () => showCard(choiceCard));
         document.getElementById('backFromRegister').addEventListener('click', () => showCard(choiceCard));
         document.getElementById('backFromStudent').addEventListener('click', () => showCard(choiceCard));
@@ -351,7 +332,7 @@
                 const { error } = await _sb.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/templates/pagina-inicial.html'
+                        redirectTo: 'http://localhost:5173/templates/pagina-inicial.html'
                     }
                 });
                 if (error) {
@@ -366,7 +347,6 @@
             }
         });
 
-        // ===== STUDENT NICKNAME ENTRY =====
         const nicknameInput = document.getElementById('nicknameInput');
         const studentMsg = document.getElementById('studentMsg');
 
@@ -382,12 +362,9 @@
             }
             localStorage.setItem('uv_student_nickname', nickname);
             showMessage(studentMsg, `Bem-vindo, ${nickname}!`, 'success');
-            setTimeout(() => {
-                window.location.href = 'pagina-inicial-aluno.html';
-            }, 800);
+            setTimeout(() => { window.location.href = 'pagina-inicial-aluno.html'; }, 800);
         });
 
-        // ===== REGISTER (PROFESSOR ONLY) =====
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('registerName').value.trim();
@@ -405,41 +382,32 @@
 
             try {
                 const { user, error } = await signUp(email, pass, name, 'professor');
-
                 btn.disabled = false;
                 btn.textContent = 'Criar Conta';
 
                 if (error) {
                     let errorMsg = 'Erro ao criar conta.';
-                    if (error.message && error.message.includes('already registered')) {
-                        errorMsg = 'Este email ja esta cadastrado.';
-                    } else if (error.message && error.message.includes('valid email')) {
-                        errorMsg = 'Email invalido.';
-                    } else if (error.message && error.message.includes('password')) {
-                        errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
-                    } else if (error.message) {
-                        errorMsg = error.message;
-                    }
+                    if (error.message && error.message.includes('already registered')) errorMsg = 'Este email ja esta cadastrado.';
+                    else if (error.message && error.message.includes('valid email')) errorMsg = 'Email invalido.';
+                    else if (error.message && error.message.includes('password')) errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
+                    else if (error.message) errorMsg = error.message;
                     showMessage(msg, errorMsg, 'error');
                     return;
                 }
 
                 showMessage(msg, 'Conta criada com sucesso! Faca login.', 'success');
                 document.getElementById('registerForm').reset();
-
                 setTimeout(() => {
                     showCard(loginCard);
                     showMessage(document.getElementById('loginMsg'), 'Conta criada! Agora faca login.', 'success');
                 }, 1500);
             } catch (err) {
-                console.error('Erro no registro:', err);
                 btn.disabled = false;
                 btn.textContent = 'Criar Conta';
                 showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
             }
         });
 
-        // ===== LOGIN (PROFESSOR ONLY) =====
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -452,19 +420,14 @@
 
             try {
                 const { user, session, error } = await signIn(email, pass);
-
                 btn.disabled = false;
                 btn.textContent = 'Entrar';
 
                 if (error) {
                     let errorMsg = 'Email ou senha incorretos.';
-                    if (error.message.includes('Invalid login')) {
-                        errorMsg = 'Email ou senha incorretos.';
-                    } else if (error.message.includes('Email not confirmed')) {
-                        errorMsg = 'Confirme seu email antes de entrar.';
-                    } else {
-                        errorMsg = error.message;
-                    }
+                    if (error.message.includes('Invalid login')) errorMsg = 'Email ou senha incorretos.';
+                    else if (error.message.includes('Email not confirmed')) errorMsg = 'Confirme seu email antes de entrar.';
+                    else errorMsg = error.message;
                     showMessage(msg, errorMsg, 'error');
                     return;
                 }
@@ -473,36 +436,25 @@
                     const { profile } = await getUser();
                     const userName = profile?.name || 'Professor';
                     showMessage(msg, `Bem-vindo ao UNIVERSUS, ${userName}!`, 'success');
-
-                    setTimeout(() => {
-                        window.location.href = 'pagina-inicial.html';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = 'pagina-inicial.html'; }, 1000);
                 }
             } catch (err) {
-                console.error('Erro no login:', err);
                 btn.disabled = false;
                 btn.textContent = 'Entrar';
                 showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
             }
         });
 
-        // ===== AUTO-LOGIN CHECK =====
         (async () => {
             const nickname = localStorage.getItem('uv_student_nickname');
-            if (nickname) {
-                window.location.href = 'pagina-inicial-aluno.html';
-                return;
-            }
+            if (nickname) { window.location.href = 'pagina-inicial-aluno.html'; return; }
 
             try {
                 if (typeof _sb !== 'undefined' && _sb) {
                     const { data: { session } } = await _sb.auth.getSession();
                     if (session) {
                         const { data: { user } } = await _sb.auth.getUser();
-                        if (user) {
-                            window.location.href = 'pagina-inicial.html';
-                            return;
-                        }
+                        if (user) { window.location.href = 'pagina-inicial.html'; return; }
                     }
                 }
             } catch (err) {
