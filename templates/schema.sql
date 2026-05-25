@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS questions (
   question_text TEXT NOT NULL,
   options JSONB NOT NULL DEFAULT '[]',
   correct_index INTEGER NOT NULL DEFAULT 0,
-  order_num INTEGER NOT NULL DEFAULT 0
+  order_num INTEGER NOT NULL DEFAULT 0,
+  difficulty TEXT NOT NULL DEFAULT 'Facil' CHECK (difficulty IN ('Facil', 'Medio', 'Dificil')),
+  time_limit INTEGER NOT NULL DEFAULT 30
 );
 
 -- 4. Tabela de tentativas/resultados

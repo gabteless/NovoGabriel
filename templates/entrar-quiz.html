@@ -248,6 +248,14 @@
             font-size: 1.05rem; color: #e2e8f0; font-weight: 600;
             margin-bottom: 20px; line-height: 1.5; min-height: 50px;
         }
+        .q-diff-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em;
+            margin-bottom: 12px;
+        }
+        .q-diff-badge.facil { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
+        .q-diff-badge.medio { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+        .q-diff-badge.dificil { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
         .options-list { display: flex; flex-direction: column; gap: 10px; }
         .option-btn {
             width: 100%; padding: 13px 16px; border-radius: 12px;
@@ -418,6 +426,7 @@
                     <div class="progress-bar"><div class="progress-fill" id="qProgressBar" style="width:0%"></div></div>
                     <span id="qTimer" class="quiz-timer">30</span>
                 </div>
+                <div id="qDiffBadge"></div>
                 <div class="question-text" id="qText">Carregando...</div>
                 <div class="options-list" id="qOptions"></div>
                 <button class="next-btn" id="qNext">Proxima →</button>
@@ -772,6 +781,11 @@
         document.getElementById('qProgress').textContent = `${currentQ + 1} / ${total}`;
         document.getElementById('qProgressBar').style.width = `${((currentQ) / total) * 100}%`;
 
+        // Difficulty badge
+        const diff = q.difficulty || 'Facil';
+        const diffClass = diff.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        document.getElementById('qDiffBadge').innerHTML = `<span class="q-diff-badge ${diffClass}">${diff}</span>`;
+
         // Question text
         document.getElementById('qText').textContent = q.question_text;
 
@@ -790,13 +804,13 @@
         document.getElementById('qNext').classList.remove('show');
         document.getElementById('qNext').textContent = currentQ < total - 1 ? 'Proxima →' : 'Ver Resultado';
 
-        // Start timer
-        startTimer();
+        // Start timer with per-question time
+        startTimer(q.time_limit || foundQuiz.time_per_question || 30);
     }
 
-    function startTimer() {
+    function startTimer(duration) {
         clearInterval(timerInterval);
-        timeLeft = foundQuiz.time_per_question || 30;
+        timeLeft = duration || 30;
         const timerEl = document.getElementById('qTimer');
         timerEl.textContent = timeLeft;
         timerEl.className = 'quiz-timer';

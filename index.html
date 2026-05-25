@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIVERSUS — Carregando...</title>
+    <meta name="description" content="UNIVERSUS — Plataforma de quizzes interativos para professores e alunos.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            overflow: hidden;
+            color: #e2e8f0;
+        }
+        .loader {
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .title {
+            font-size: 3rem;
+            font-weight: 900;
+            letter-spacing: 1rem;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa, #f472b6, #a78bfa);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gs 6s ease infinite;
+            margin-bottom: 32px;
+        }
+        @keyframes gs { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(167,139,250,0.2);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .subtitle {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.35);
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <h1 class="title">UNIVERSUS</h1>
+        <div class="spinner"></div>
+        <p class="subtitle">Carregando...</p>
+    </div>
+
+    <script>
+        // Smart redirect: check for existing sessions and route accordingly
+        (async function() {
+            // 1. Check student nickname (localStorage — instant, no network)
+            const nickname = localStorage.getItem('uv_student_nickname');
+            if (nickname) {
+                window.location.replace('templates/pagina-inicial-aluno.html');
+                return;
+            }
+
+            // 2. Check teacher Supabase session
+            try {
+                const SUPABASE_URL = 'https://otxvqphwtuldkrglfwxh.supabase.co';
+                const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90eHZxcGh3dHVsZGtyZ2xmd3hoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwOTk4OTgsImV4cCI6MjA4ODY3NTg5OH0.jRyaHr3k96dm5-486S-EXvNespBl9Iwh2bIupM1YnVU';
+
+                const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                const { data: { session } } = await sb.auth.getSession();
+
+                if (session) {
+                    const { data: { user } } = await sb.auth.getUser();
+                    if (user) {
+                        window.location.replace('templates/pagina-inicial.html');
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.log('Session check failed:', err);
+            }
+
+            // 3. No session found — go to login
+            window.location.replace('templates/tela-login.html');
+        })();
+    </script>
+</body>
+</html>

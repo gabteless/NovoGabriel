@@ -214,7 +214,9 @@ async function createQuiz(quizData, questionsData) {
     question_text: q.question,
     options: q.options,
     correct_index: q.correctIndex,
-    order_num: i + 1
+    order_num: i + 1,
+    difficulty: q.difficulty || 'Facil',
+    time_limit: q.timeLimit || 30
   }));
 
   const { error: questionsError } = await _sb
