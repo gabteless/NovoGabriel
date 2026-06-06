@@ -27,7 +27,6 @@ jobs:
           mkdir -p dist/templates
           cp index.html dist/
           cp -r templates/. dist/templates/
-          cp public/supabase.js dist/
           touch dist/.nojekyll
 
       - name: Setup Pages
