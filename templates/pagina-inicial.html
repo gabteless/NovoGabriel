@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UNIVERSUS — Quiz</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/three@0.128.0/build/three.min.js';"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="../supabase.js"></script>
     <script src="supabase-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -809,47 +809,51 @@
             return;
         }
 
-        // Check if user is logged in
         let currentUser = null;
         let currentProfile = null;
 
+        // Tenta ler sessão direto do storage (sem depender de eventos)
+        let { data: { session } } = await _sb.auth.getSession();
+
+        // Fallback: handoff via sessionStorage (passado pelo index.html após PKCE)
+        if (!session) {
+            const handoff = sessionStorage.getItem('uv_auth_handoff');
+            if (handoff) {
+                sessionStorage.removeItem('uv_auth_handoff');
+                try {
+                    const { data } = await _sb.auth.setSession(JSON.parse(handoff));
+                    session = data?.session ?? null;
+                } catch(e) {}
+            }
+        }
+
+        if (!session) {
+            window.location.href = 'tela-login.html';
+            return;
+        }
+
+        currentUser = session.user;
+
         try {
-            const { data: { session } } = await _sb.auth.getSession();
-            if (!session) {
-                // No session at all — redirect to login
-                window.location.href = 'tela-login.html';
-                return;
-            }
-
-            // We have a session, try to get user and profile
             const { user, profile } = await getUser();
-            currentUser = user;
+            if (user) currentUser = user;
             currentProfile = profile;
+        } catch (e) {
+            console.warn('getUser falhou, usando session.user:', e);
+        }
 
-            if (!currentUser) {
-                window.location.href = 'tela-login.html';
-                return;
-            }
+        if (currentProfile && currentProfile.role !== 'professor') {
+            window.location.href = 'pagina-inicial-aluno.html';
+            return;
+        }
 
-            // If profile exists but not professor, redirect
-            if (currentProfile && currentProfile.role !== 'professor') {
-                window.location.href = 'pagina-inicial-aluno.html';
-                return;
-            }
-
-            // If no profile, use user metadata as fallback
-            if (!currentProfile) {
-                const meta = currentUser.user_metadata || {};
-                currentProfile = {
-                    name: meta.name || 'Professor',
-                    role: meta.role || 'professor',
-                    email: currentUser.email
-                };
-            }
-        } catch (err) {
-            console.error('Auth check error:', err);
-            // If we can't check auth, just show the page with defaults
-            currentProfile = { name: 'Professor', role: 'professor' };
+        if (!currentProfile) {
+            const meta = currentUser.user_metadata || {};
+            currentProfile = {
+                name: meta.name || meta.full_name || 'Professor',
+                role: meta.role || 'professor',
+                email: currentUser.email
+            };
         }
 
         document.getElementById('settingsUserName').textContent = currentProfile.name || 'Professor';
