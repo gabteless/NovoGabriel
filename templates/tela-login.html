@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -189,7 +189,7 @@
             <div class="role-btn" id="choiceTeacher">
                 <div class="role-icon">👨‍🏫</div>
                 <div class="role-label">Professor</div>
-                <div class="role-desc">Email e senha</div>
+                <div class="role-desc">Conta Google</div>
             </div>
             <div class="role-btn" id="choiceStudent">
                 <div class="role-icon">🎓</div>
@@ -199,67 +199,19 @@
         </div>
     </div>
 
-    <!-- TELA 2: Login Professor -->
+    <!-- TELA 2: Login Professor (apenas Google) -->
     <div class="card hidden" id="loginCard">
         <h2>Entrar como Professor</h2>
-        <p class="subtitle">Use seu email e senha</p>
+        <p class="subtitle">Use sua conta Google</p>
         <div class="message" id="loginMsg"></div>
-        <form id="loginForm">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="seu@email.com" required>
-            </div>
-            <div class="form-group">
-                <label>Senha</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn btn-primary" id="loginBtn">Entrar</button>
-        </form>
-
-        <!-- GOOGLE LOGIN -->
-        <div class="separator">ou</div>
         <button type="button" class="btn btn-google" id="googleLoginBtn">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="18" alt="Google">
             Entrar com Google
         </button>
-
-        <p class="toggle-text">
-            Nao tem uma conta? <a id="showRegister">Criar conta</a>
-        </p>
-        <div class="back-link"><a id="backFromLogin">← Voltar</a></div>
+        <div class="back-link" style="margin-top:20px"><a id="backFromLogin">← Voltar</a></div>
     </div>
 
-    <!-- TELA 3: Registro Professor -->
-    <div class="card hidden" id="registerCard">
-        <h2>Criar Conta de Professor</h2>
-        <p class="subtitle">Junte-se ao UNIVERSUS</p>
-        <div class="message" id="registerMsg"></div>
-        <form id="registerForm">
-            <div class="form-group">
-                <label>Nome</label>
-                <input type="text" id="registerName" placeholder="Seu nome" required>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="registerEmail" placeholder="seu@email.com" required>
-            </div>
-            <div class="form-group">
-                <label>Senha</label>
-                <input type="password" id="registerPassword" placeholder="Minimo 6 caracteres" required minlength="6">
-            </div>
-            <div class="form-group">
-                <label>Confirmar Senha</label>
-                <input type="password" id="registerConfirm" placeholder="Repita a senha" required minlength="6">
-            </div>
-            <button type="submit" class="btn btn-primary" id="registerBtn">Criar Conta</button>
-        </form>
-        <p class="toggle-text">
-            Ja tem uma conta? <a id="showLogin">Entrar</a>
-        </p>
-        <div class="back-link"><a id="backFromRegister">← Voltar</a></div>
-    </div>
-
-    <!-- TELA 4: Entrada Aluno (apelido) -->
+    <!-- TELA 3: Entrada Aluno (apelido) -->
     <div class="card hidden" id="studentCard">
         <h2>Entrar como Aluno</h2>
         <p class="subtitle">Escolha um apelido para jogar</p>
@@ -272,10 +224,69 @@
     </div>
 
     <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="../supabase.js"></script>
     <script src="supabase-config.js"></script>
 
     <script>
+        // ===== OAUTH CALLBACK HANDLER =====
+        // Supabase pode redirecionar o callback OAuth para esta página (Site URL)
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const hash = new URLSearchParams(window.location.hash.slice(1));
+
+            const hasCode = params.has('code');
+            const hasToken = hash.has('access_token');
+            const hasError = params.has('error') || hash.has('error');
+
+            if (!hasCode && !hasToken && !hasError) return;
+
+            // Mostrar overlay de carregamento enquanto processa
+            document.body.insertAdjacentHTML('afterbegin',
+                '<div id="oauthOverlay" style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#090a0f;flex-direction:column;gap:16px;">' +
+                '<div style="width:40px;height:40px;border:3px solid rgba(167,139,250,.2);border-top-color:#a78bfa;border-radius:50%;animation:spin .7s linear infinite"></div>' +
+                '<p style="color:#e2e8f0;font-family:sans-serif;font-size:.95rem;" id="oauthMsg">Finalizando login com Google...</p>' +
+                '<style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>'
+            );
+
+            if (hasError) {
+                const errDesc = params.get('error_description') || hash.get('error_description') || 'Erro no login com Google';
+                document.getElementById('oauthMsg').textContent = decodeURIComponent(errDesc.replace(/\+/g, ' '));
+                setTimeout(() => {
+                    document.getElementById('oauthOverlay').remove();
+                    window.history.replaceState({}, '', window.location.pathname);
+                }, 3000);
+                return;
+            }
+
+            // Aguarda o Supabase trocar o código por sessão
+            function waitForSession() {
+                if (typeof _sb === 'undefined' || !_sb) {
+                    setTimeout(waitForSession, 50);
+                    return;
+                }
+                const { data: { subscription } } = _sb.auth.onAuthStateChange(function (event, session) {
+                    if (event !== 'INITIAL_SESSION' && event !== 'SIGNED_IN') return;
+                    subscription.unsubscribe();
+                    if (session) {
+                        try {
+                            sessionStorage.setItem('uv_auth_handoff', JSON.stringify({
+                                access_token: session.access_token,
+                                refresh_token: session.refresh_token
+                            }));
+                        } catch (e) {}
+                        window.location.replace('pagina-inicial.html');
+                    } else {
+                        document.getElementById('oauthMsg').textContent = 'Sessão não encontrada. Tente novamente.';
+                        setTimeout(() => {
+                            document.getElementById('oauthOverlay').remove();
+                            window.history.replaceState({}, '', window.location.pathname);
+                        }, 2500);
+                    }
+                });
+            }
+            waitForSession();
+        })();
+
         // ===== STARS =====
         function generateStars(canvasId, count, size, speed) {
             const canvas = document.getElementById(canvasId);
@@ -306,16 +317,11 @@
         // ===== CARD NAVIGATION =====
         const choiceCard = document.getElementById('choiceCard');
         const loginCard = document.getElementById('loginCard');
-        const registerCard = document.getElementById('registerCard');
         const studentCard = document.getElementById('studentCard');
 
         function showCard(card) {
-            [choiceCard, loginCard, registerCard, studentCard].forEach(c => c.classList.add('hidden'));
+            [choiceCard, loginCard, studentCard].forEach(c => c.classList.add('hidden'));
             card.classList.remove('hidden');
-            clearMsg();
-        }
-
-        function clearMsg() {
             document.querySelectorAll('.message').forEach(m => { m.className='message'; m.textContent=''; });
         }
 
@@ -323,7 +329,6 @@
             el.textContent = text; el.className = 'message ' + type;
         }
 
-        // Choice buttons
         document.getElementById('choiceTeacher').addEventListener('click', () => showCard(loginCard));
         document.getElementById('choiceStudent').addEventListener('click', () => {
             showCard(studentCard);
@@ -332,13 +337,7 @@
             setTimeout(() => document.getElementById('nicknameInput').focus(), 100);
         });
 
-        // Toggle login/register
-        document.getElementById('showRegister').addEventListener('click', () => showCard(registerCard));
-        document.getElementById('showLogin').addEventListener('click', () => showCard(loginCard));
-
-        // Back buttons
         document.getElementById('backFromLogin').addEventListener('click', () => showCard(choiceCard));
-        document.getElementById('backFromRegister').addEventListener('click', () => showCard(choiceCard));
         document.getElementById('backFromStudent').addEventListener('click', () => showCard(choiceCard));
 
         // ===== GOOGLE LOGIN =====
@@ -351,7 +350,7 @@
                 const { error } = await _sb.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/templates/pagina-inicial.html'
+                        redirectTo: window.location.origin + '/Projeto-Integrador-II/'
                     }
                 });
                 if (error) {
@@ -386,129 +385,6 @@
                 window.location.href = 'pagina-inicial-aluno.html';
             }, 800);
         });
-
-        // ===== REGISTER (PROFESSOR ONLY) =====
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('registerName').value.trim();
-            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
-            const pass = document.getElementById('registerPassword').value;
-            const confirm = document.getElementById('registerConfirm').value;
-            const msg = document.getElementById('registerMsg');
-            const btn = document.getElementById('registerBtn');
-
-            if (pass !== confirm) { showMessage(msg, 'As senhas nao coincidem.', 'error'); return; }
-            if (pass.length < 6) { showMessage(msg, 'A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Criando conta...';
-
-            try {
-                const { user, error } = await signUp(email, pass, name, 'professor');
-
-                btn.disabled = false;
-                btn.textContent = 'Criar Conta';
-
-                if (error) {
-                    let errorMsg = 'Erro ao criar conta.';
-                    if (error.message && error.message.includes('already registered')) {
-                        errorMsg = 'Este email ja esta cadastrado.';
-                    } else if (error.message && error.message.includes('valid email')) {
-                        errorMsg = 'Email invalido.';
-                    } else if (error.message && error.message.includes('password')) {
-                        errorMsg = 'A senha deve ter pelo menos 6 caracteres.';
-                    } else if (error.message) {
-                        errorMsg = error.message;
-                    }
-                    showMessage(msg, errorMsg, 'error');
-                    return;
-                }
-
-                showMessage(msg, 'Conta criada com sucesso! Faca login.', 'success');
-                document.getElementById('registerForm').reset();
-
-                setTimeout(() => {
-                    showCard(loginCard);
-                    showMessage(document.getElementById('loginMsg'), 'Conta criada! Agora faca login.', 'success');
-                }, 1500);
-            } catch (err) {
-                console.error('Erro no registro:', err);
-                btn.disabled = false;
-                btn.textContent = 'Criar Conta';
-                showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
-            }
-        });
-
-        // ===== LOGIN (PROFESSOR ONLY) =====
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-            const pass = document.getElementById('loginPassword').value;
-            const msg = document.getElementById('loginMsg');
-            const btn = document.getElementById('loginBtn');
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>Entrando...';
-
-            try {
-                const { user, session, error } = await signIn(email, pass);
-
-                btn.disabled = false;
-                btn.textContent = 'Entrar';
-
-                if (error) {
-                    let errorMsg = 'Email ou senha incorretos.';
-                    if (error.message.includes('Invalid login')) {
-                        errorMsg = 'Email ou senha incorretos.';
-                    } else if (error.message.includes('Email not confirmed')) {
-                        errorMsg = 'Confirme seu email antes de entrar.';
-                    } else {
-                        errorMsg = error.message;
-                    }
-                    showMessage(msg, errorMsg, 'error');
-                    return;
-                }
-
-                if (user) {
-                    const { profile } = await getUser();
-                    const userName = profile?.name || 'Professor';
-                    showMessage(msg, `Bem-vindo ao UNIVERSUS, ${userName}!`, 'success');
-
-                    setTimeout(() => {
-                        window.location.href = 'pagina-inicial.html';
-                    }, 1000);
-                }
-            } catch (err) {
-                console.error('Erro no login:', err);
-                btn.disabled = false;
-                btn.textContent = 'Entrar';
-                showMessage(msg, 'Erro de conexao: ' + (err.message || 'verifique sua internet'), 'error');
-            }
-        });
-
-        // ===== AUTO-LOGIN CHECK =====
-        (async () => {
-            const nickname = localStorage.getItem('uv_student_nickname');
-            if (nickname) {
-                window.location.href = 'pagina-inicial-aluno.html';
-                return;
-            }
-
-            try {
-                if (typeof _sb !== 'undefined' && _sb) {
-                    const { data: { session } } = await _sb.auth.getSession();
-                    if (session) {
-                        const { data: { user } } = await _sb.auth.getUser();
-                        if (user) {
-                            window.location.href = 'pagina-inicial.html';
-                            return;
-                        }
-                    }
-                }
-            } catch (err) {
-                console.log('Auto-login check failed:', err);
-            }
-        })();
     </script>
 </body>
 </html>
