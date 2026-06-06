@@ -350,7 +350,7 @@
                 const { error } = await _sb.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + '/Projeto-Integrador-II/'
+                        redirectTo: window.location.href.split('/templates/')[0] + '/'
                     }
                 });
                 if (error) {
