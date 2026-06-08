@@ -350,7 +350,7 @@
                 const { error } = await _sb.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.origin + window.location.pathname
+                        redirectTo: window.location.origin + '/NovoGabriel/templates/pagina-inicial.html'
                     }
                 });
                 if (error) {
