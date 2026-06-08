@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -350,7 +350,7 @@
                 const { error } = await _sb.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: window.location.href.split('/templates/')[0] + '/'
+                        redirectTo: window.location.origin + window.location.pathname
                     }
                 });
                 if (error) {
@@ -385,6 +385,42 @@
                 window.location.href = 'pagina-inicial-aluno.html';
             }, 800);
         });
+
+        // ===== AUTO-LOGIN CHECK =====
+        // Loop prevention: if pagina-inicial sent us here, don't redirect back
+        const cameFromDashboard = sessionStorage.getItem('uv_login_redirect_ts');
+        const isLoopRisk = cameFromDashboard && (Date.now() - parseInt(cameFromDashboard)) < 5000;
+        sessionStorage.removeItem('uv_login_redirect_ts');
+
+        if (!isLoopRisk) {
+            // Listen for OAuth callback (PKCE code exchange)
+            _sb.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    window.location.href = 'pagina-inicial.html';
+                }
+            });
+
+            // Check existing session (for direct visits, not OAuth callback)
+            (async () => {
+                const nickname = localStorage.getItem('uv_student_nickname');
+                if (nickname) {
+                    window.location.href = 'pagina-inicial-aluno.html';
+                    return;
+                }
+
+                // If OAuth callback in progress, let onAuthStateChange handle it
+                if (window.location.hash || new URLSearchParams(window.location.search).has('code')) {
+                    return;
+                }
+
+                try {
+                    const { data: { session } } = await _sb.auth.getSession();
+                    if (session) {
+                        window.location.href = 'pagina-inicial.html';
+                    }
+                } catch (err) {}
+            })();
+        }
     </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -828,6 +828,7 @@
         }
 
         if (!session) {
+            sessionStorage.setItem('uv_login_redirect_ts', Date.now().toString());
             window.location.href = 'tela-login.html';
             return;
         }

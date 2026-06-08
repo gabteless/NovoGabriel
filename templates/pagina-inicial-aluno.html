@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -113,6 +113,110 @@
         .quiz-card h4 { font-size: 1rem; margin-bottom: 6px; color: #e2e8f0; }
         .quiz-card p { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
         .quiz-card .meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: rgba(255,255,255,0.3); }
+
+        /* ===== CODE ENTRY SECTION ===== */
+        .code-entry-section {
+            max-width: 480px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .code-entry-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .code-entry-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 8px;
+        }
+        .code-entry-desc {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 28px;
+            line-height: 1.5;
+        }
+        .code-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .code-input {
+            flex: 1;
+            padding: 16px 20px;
+            border-radius: 14px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.06);
+            color: #e2e8f0;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.4rem;
+            text-align: center;
+            text-transform: uppercase;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .code-input::placeholder {
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 0.2rem;
+            font-weight: 400;
+            font-size: 0.95rem;
+        }
+        .code-input:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 20px rgba(124,58,237,0.15);
+        }
+        .code-submit-btn {
+            padding: 16px 28px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.3s;
+            white-space: nowrap;
+        }
+        .code-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+        }
+        .code-submit-btn:active { transform: scale(0.97); }
+        .code-submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .code-error {
+            color: #fca5a5;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            min-height: 20px;
+            transition: opacity 0.3s;
+        }
+        .code-success {
+            color: #86efac;
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+        .recent-quizzes-title {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.35);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 40px;
+            margin-bottom: 16px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
         .stat-card {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
@@ -265,15 +369,15 @@
             </select>
         </div>
         <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.1);">
-            <button id="logoutBtn" style="width:100%;padding:10px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;transition:background 0.3s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">Trocar apelido</button>
+            <button id="logoutBtn" style="width:100%;padding:10px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#ef4444;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;transition:background 0.3s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">Sair</button>
         </div>
     </div>
 
     <div class="app-container">
         <div class="sidebar">
     <div class="nav-item active" data-panel="search">
-        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <span>Procurar Quiz</span>
+        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        <span>Inserir Codigo</span>
     </div>
 
     <div class="nav-item" data-panel="reports">
@@ -296,9 +400,20 @@
 
         <div class="main-content">
             <div class="panel active" id="panel-search">
-                <div class="search-box"><svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg><input type="text" placeholder="Procurar quiz..." id="searchInput"></div>
-                <div class="quiz-grid" id="quizGrid">
-                    <div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;">Carregando quizzes...</div>
+                <div class="code-entry-section">
+                    <div class="code-entry-icon">🔑</div>
+                    <div class="code-entry-title">Entrar em um Quiz</div>
+                    <div class="code-entry-desc">Digite o codigo de acesso fornecido pelo seu professor para participar de um quiz.</div>
+                    <div class="code-input-group">
+                        <input type="text" class="code-input" id="codeInput" placeholder="EX: ABC123" maxlength="6" autocomplete="off" spellcheck="false">
+                        <button class="code-submit-btn" id="codeSubmitBtn">Entrar</button>
+                    </div>
+                    <div class="code-error" id="codeError"></div>
+                    <div class="code-success" id="codeSuccess"></div>
+                </div>
+                <div id="recentQuizzesSection" style="display:none;">
+                    <div class="recent-quizzes-title">Quizzes Recentes</div>
+                    <div class="quiz-grid" id="quizGrid"></div>
                 </div>
             </div>
             <div class="panel" id="panel-reports">
@@ -394,8 +509,77 @@
     sO.onclick=()=>{sP.classList.add('open');sOv.classList.add('open');};
     document.getElementById('closeSettings').onclick=document.getElementById('settingsOverlay').onclick=()=>{sP.classList.remove('open');sOv.classList.remove('open');};
 
-    // Search
-    document.getElementById('searchInput').oninput=function(){const q=this.value.toLowerCase();document.querySelectorAll('.quiz-card').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'block':'none';});};
+    // Code input: auto-uppercase and limit to 6 chars
+    const codeInput = document.getElementById('codeInput');
+    const codeSubmitBtn = document.getElementById('codeSubmitBtn');
+    const codeError = document.getElementById('codeError');
+    const codeSuccess = document.getElementById('codeSuccess');
+
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        codeError.textContent = '';
+        codeSuccess.textContent = '';
+    });
+
+    codeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') codeSubmitBtn.click();
+    });
+
+    codeSubmitBtn.addEventListener('click', async function() {
+        const code = codeInput.value.trim();
+        if (!code || code.length < 4) {
+            codeError.textContent = 'Por favor, insira um codigo valido (minimo 4 caracteres).';
+            return;
+        }
+
+        codeSubmitBtn.disabled = true;
+        codeSubmitBtn.textContent = 'Buscando...';
+        codeError.textContent = '';
+        codeSuccess.textContent = '';
+
+        try {
+            const { data: quiz, error } = await getQuizByCode(code);
+
+            if (error || !quiz) {
+                codeError.textContent = 'Codigo nao encontrado. Verifique e tente novamente.';
+                codeSubmitBtn.disabled = false;
+                codeSubmitBtn.textContent = 'Entrar';
+                return;
+            }
+
+            // Save to recent quizzes in localStorage
+            saveRecentQuiz(quiz);
+
+            codeSuccess.textContent = 'Quiz encontrado: ' + quiz.title + '! Redirecionando...';
+            setTimeout(() => {
+                window.location.href = 'entrar-quiz.html?code=' + encodeURIComponent(code);
+            }, 800);
+        } catch (err) {
+            codeError.textContent = 'Erro ao buscar quiz. Tente novamente.';
+            console.error(err);
+            codeSubmitBtn.disabled = false;
+            codeSubmitBtn.textContent = 'Entrar';
+        }
+    });
+
+    function saveRecentQuiz(quiz) {
+        let recent = JSON.parse(localStorage.getItem('uv_recent_quizzes') || '[]');
+        // Remove duplicate if exists
+        recent = recent.filter(r => r.id !== quiz.id);
+        // Add to beginning
+        recent.unshift({
+            id: quiz.id,
+            title: quiz.title,
+            category: quiz.category,
+            description: quiz.description,
+            difficulty: quiz.difficulty,
+            access_code: quiz.access_code,
+            accessedAt: new Date().toISOString()
+        });
+        // Keep max 10
+        recent = recent.slice(0, 10);
+        localStorage.setItem('uv_recent_quizzes', JSON.stringify(recent));
+    }
 
     // Tab switch
     document.querySelectorAll('.ctab').forEach(t=>t.onclick=()=>{
@@ -823,46 +1007,34 @@
             window.location.href = 'tela-login.html';
         });
 
-        await loadQuizzes();
+        loadRecentQuizzes();
         await loadReports();
     })();
 
     function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    async function loadQuizzes() {
+    function loadRecentQuizzes() {
+        const section = document.getElementById('recentQuizzesSection');
         const grid = document.getElementById('quizGrid');
-        try {
-            const { data: quizzes, error } = await getActiveQuizzes();
-            if (error) throw error;
+        const recent = JSON.parse(localStorage.getItem('uv_recent_quizzes') || '[]');
 
-            if (!quizzes || quizzes.length === 0) {
-                grid.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(255,255,255,0.3);grid-column:1/-1;">Nenhum quiz disponivel no momento.</div>';
-                return;
-            }
-
-            grid.innerHTML = quizzes.map(q => {
-                const qCount = q.questions?.[0]?.count || 0;
-                return `<div class="quiz-card" onclick="window.location.href='entrar-quiz.html'" style="cursor:pointer;">
-                    <span class="cat">${esc(q.category)}</span>
-                    <h4>${esc(q.title)}</h4>
-                    <p>${esc(q.description) || 'Sem descricao'}</p>
-                    <div class="meta">
-                        <span>${qCount} perguntas</span>
-                        <span>${q.difficulty}</span>
-                    </div>
-                </div>`;
-            }).join('');
-
-            document.getElementById('searchInput').oninput = function() {
-                const query = this.value.toLowerCase();
-                document.querySelectorAll('.quiz-card').forEach(c => {
-                    c.style.display = c.textContent.toLowerCase().includes(query) ? 'block' : 'none';
-                });
-            };
-        } catch (err) {
-            grid.innerHTML = '<div style="text-align:center;padding:40px;color:#fca5a5;grid-column:1/-1;">Erro ao carregar quizzes</div>';
-            console.error(err);
+        if (recent.length === 0) {
+            section.style.display = 'none';
+            return;
         }
+
+        section.style.display = 'block';
+        grid.innerHTML = recent.map(q => {
+            return `<div class="quiz-card" onclick="window.location.href='entrar-quiz.html?code=${encodeURIComponent(q.access_code)}'" style="cursor:pointer;">
+                <span class="cat">${esc(q.category)}</span>
+                <h4>${esc(q.title)}</h4>
+                <p>${esc(q.description) || 'Sem descricao'}</p>
+                <div class="meta">
+                    <span>${q.difficulty}</span>
+                    <span>${new Date(q.accessedAt).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'})}</span>
+                </div>
+            </div>`;
+        }).join('');
     }
 
     async function loadReports() {
