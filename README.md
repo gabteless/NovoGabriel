@@ -60,30 +60,6 @@ O projeto foi desenvolvido como parte de uma iniciativa acadêmica, aplicando co
 
 ---
 
-## Estrutura do Projeto
-
-O sistema foi organizado seguindo uma separação de responsabilidades, facilitando manutenção e evolução da aplicação.
-
-Principais módulos:
-
-```
-Universus
-│
-├── Usuários
-│   └── Autenticação e controle de acesso
-│
-├── Quizzes
-│   └── Criação, edição e gerenciamento
-│
-├── Perguntas
-│   └── Cadastro e armazenamento das questões
-│
-└── Respostas
-    └── Registro e análise dos resultados
-```
-
----
-
 ## Objetivo
 
 O projeto busca oferecer uma alternativa simples e acessível para criação de avaliações digitais, reduzindo a complexidade de ferramentas tradicionais e proporcionando uma experiência mais interativa para professores e alunos.
