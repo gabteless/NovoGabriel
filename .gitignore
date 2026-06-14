@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 # Ignorar variáveis de ambiente
 .env
+
+# Instruções locais do Claude Code
+CLAUDE.md
