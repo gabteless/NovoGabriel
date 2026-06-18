@@ -995,6 +995,9 @@
         // Read nickname directly from localStorage (no dependency on supabase-config.js)
         const nickname = localStorage.getItem('uv_student_nickname');
         if (!nickname) {
+            // Marca o guard anti-loop que a tela-login respeita, para nunca
+            // formar um ciclo infinito de redirecionamento entre as páginas.
+            sessionStorage.setItem('uv_login_redirect_ts', Date.now().toString());
             window.location.href = 'tela-login.html';
             return;
         }

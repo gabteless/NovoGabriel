@@ -843,7 +843,11 @@
             console.warn('getUser falhou, usando session.user:', e);
         }
 
-        if (currentProfile && currentProfile.role !== 'professor') {
+        // Só redireciona para o painel de aluno se houver de fato um apelido de aluno
+        // (aluno usa apenas localStorage, sem sessão Supabase). Um usuário AUTENTICADO
+        // é sempre professor neste app — sem essa guarda, um profile.role errado
+        // causava loop infinito tela-login → pagina-inicial → pagina-inicial-aluno → tela-login.
+        if (currentProfile && currentProfile.role !== 'professor' && localStorage.getItem('uv_student_nickname')) {
             window.location.href = 'pagina-inicial-aluno.html';
             return;
         }
