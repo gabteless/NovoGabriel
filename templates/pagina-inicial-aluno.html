@@ -217,7 +217,7 @@
             padding-top: 24px;
             border-top: 1px solid rgba(255,255,255,0.06);
         }
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 30px; }
         .stat-card {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
             border-radius: 14px; padding: 20px; text-align: center;
@@ -231,6 +231,42 @@
         table.rt { width: 100%; border-collapse: collapse; }
         table.rt th { text-align: left; font-size: 0.75rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         table.rt td { padding: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.04); }
+        table.rt tbody tr:hover td { background: rgba(255,255,255,0.03); }
+
+        /* ===== RELATORIOS (melhorias) ===== */
+        .rep-section-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); margin: 0 0 14px; }
+        .rep-toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+        .rep-toolbar select {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0; padding: 9px 14px; border-radius: 10px; font-size: 0.85rem;
+            outline: none; font-family: inherit; cursor: pointer;
+        }
+        .rep-toolbar select:focus { border-color: #a78bfa; }
+        .rep-spacer { flex: 1; }
+        .rep-btn {
+            background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.3);
+            color: #c4b5fd; padding: 9px 16px; border-radius: 10px; font-size: 0.82rem;
+            font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+            transition: background 0.25s, border-color 0.25s; font-family: inherit;
+        }
+        .rep-btn:hover:not(:disabled) { background: rgba(124,58,237,0.22); border-color: rgba(124,58,237,0.5); }
+        .rep-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .qsum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-bottom: 28px; }
+        .qsum-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 18px; }
+        .qsum-card h4 { color: #e2e8f0; font-size: 0.95rem; margin: 2px 0 0; }
+        .qsum-card .qsum-cat { font-size: 0.68rem; color: #a78bfa; text-transform: uppercase; letter-spacing: 0.08em; }
+        .qsum-stats { display: flex; gap: 14px; margin-top: 12px; }
+        .qsum-stats > div { flex: 1; }
+        .qsum-stats .v { font-size: 1.15rem; font-weight: 700; color: #e2e8f0; }
+        .qsum-stats .l { font-size: 0.66rem; color: rgba(255,255,255,0.4); margin-top: 2px; }
+        .qsum-bar { height: 6px; border-radius: 4px; background: rgba(255,255,255,0.08); margin-top: 12px; overflow: hidden; }
+        .qsum-bar > span { display: block; height: 100%; border-radius: 4px; }
+
+        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+        .badge.good { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+        .badge.mid  { background: rgba(234,179,8,0.15); color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
+        .badge.low  { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
 
         /* ===== AVATAR EDITOR ===== */
         .cmo {
@@ -418,8 +454,28 @@
             </div>
             <div class="panel" id="panel-reports">
                 <div style="margin-bottom:25px;"><h2 style="font-size:1.3rem;color:#e2e8f0;">Meus Resultados</h2></div>
-                <div class="stats-row" id="statsRow"><div class="stat-card"><div class="sv" id="statPlayed">0</div><div class="sl">Quizzes Jogados</div></div><div class="stat-card"><div class="sv" id="statRate">0%</div><div class="sl">Taxa de Acerto</div></div><div class="stat-card"><div class="sv" id="statBest">0</div><div class="sl">Melhor Pontuacao</div></div></div>
-                <table class="rt"><thead><tr><th>Quiz</th><th>Data</th><th>Acertos</th><th>Pontos</th></tr></thead><tbody id="reportsBody">
+                <div class="stats-row" id="statsRow">
+                    <div class="stat-card"><div class="sv" id="statPlayed">0</div><div class="sl">Quizzes Jogados</div></div>
+                    <div class="stat-card"><div class="sv" id="statRate">0%</div><div class="sl">Taxa de Acerto</div></div>
+                    <div class="stat-card"><div class="sv" id="statBest">0%</div><div class="sl">Melhor Pontuacao</div></div>
+                    <div class="stat-card"><div class="sv" id="statCorrect">0</div><div class="sl">Acertos Totais</div></div>
+                </div>
+
+                <p class="rep-section-title">Desempenho por quiz</p>
+                <div class="qsum-grid" id="qsumGrid">
+                    <div style="color:rgba(255,255,255,0.3);font-size:0.85rem;">Carregando...</div>
+                </div>
+
+                <p class="rep-section-title">Historico de partidas</p>
+                <div class="rep-toolbar">
+                    <select id="reportFilter"><option value="">Todos os quizzes</option></select>
+                    <div class="rep-spacer"></div>
+                    <button class="rep-btn" id="exportCsvBtn" disabled>
+                        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/></svg>
+                        Exportar CSV
+                    </button>
+                </div>
+                <table class="rt"><thead><tr><th>Quiz</th><th>Acertos</th><th>Aproveitamento</th><th>Data</th></tr></thead><tbody id="reportsBody">
                     <tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Carregando...</td></tr>
                 </tbody></table>
             </div>
@@ -1040,36 +1096,136 @@
         }).join('');
     }
 
+    // ===== RELATORIOS =====
+    let _reportAttempts = [];
+
+    function pctOf(a) {
+        if (typeof a.score === 'number') return Math.round(a.score);
+        return a.totalQuestions > 0 ? Math.round((a.correctAnswers / a.totalQuestions) * 100) : 0;
+    }
+    function pctClass(p) { return p >= 70 ? 'good' : p >= 40 ? 'mid' : 'low'; }
+    function barColor(p) {
+        if (p >= 70) return 'linear-gradient(90deg,#22c55e,#4ade80)';
+        if (p >= 40) return 'linear-gradient(90deg,#eab308,#fde047)';
+        return 'linear-gradient(90deg,#ef4444,#f87171)';
+    }
+    function fmtDateTime(iso) {
+        const d = new Date(iso);
+        return d.toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit'}) + ' ' +
+               d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+    }
+
     async function loadReports() {
         try {
             // Alunos usam localStorage para salvar tentativas (sem Supabase Auth)
-            const attempts = JSON.parse(localStorage.getItem('uv_quiz_attempts') || '[]');
+            _reportAttempts = JSON.parse(localStorage.getItem('uv_quiz_attempts') || '[]');
 
-            document.getElementById('statPlayed').textContent = attempts.length;
+            document.getElementById('statPlayed').textContent = _reportAttempts.length;
 
-            if (attempts.length > 0) {
-                const avgRate = Math.round(attempts.reduce((acc, a) => acc + (a.score || 0), 0) / attempts.length);
-                const bestScore = Math.max(...attempts.map(a => a.score || 0));
+            if (_reportAttempts.length > 0) {
+                const avgRate = Math.round(_reportAttempts.reduce((acc, a) => acc + pctOf(a), 0) / _reportAttempts.length);
+                const bestScore = Math.max(..._reportAttempts.map(pctOf));
+                const totalCorrect = _reportAttempts.reduce((acc, a) => acc + (a.correctAnswers || 0), 0);
                 document.getElementById('statRate').textContent = avgRate + '%';
                 document.getElementById('statBest').textContent = bestScore + '%';
-
-                const tbody = document.getElementById('reportsBody');
-                tbody.innerHTML = attempts.slice(0, 20).map(a => {
-                    const date = new Date(a.completedAt).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit', year:'2-digit'});
-                    return `<tr>
-                        <td>${esc(a.quizTitle || 'Quiz')}</td>
-                        <td>${date}</td>
-                        <td>${a.correctAnswers || 0}/${a.totalQuestions || 0}</td>
-                        <td>${a.score || 0}%</td>
-                    </tr>`;
-                }).join('');
+                document.getElementById('statCorrect').textContent = totalCorrect;
             } else {
-                document.getElementById('reportsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Voce ainda nao jogou nenhum quiz</td></tr>';
+                document.getElementById('statRate').textContent = '0%';
+                document.getElementById('statBest').textContent = '0%';
+                document.getElementById('statCorrect').textContent = '0';
             }
+
+            renderQuizSummary();
+            populateReportFilter();
+            renderReportRows('');
+
+            const exportBtn = document.getElementById('exportCsvBtn');
+            exportBtn.disabled = _reportAttempts.length === 0;
+            exportBtn.onclick = exportReportsCsv;
+            document.getElementById('reportFilter').onchange = function () { renderReportRows(this.value); };
         } catch (err) {
             console.error('Reports error:', err);
             document.getElementById('reportsBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Erro ao carregar relatorios</td></tr>';
         }
+    }
+
+    function quizKey(a) { return a.quizId || a.quizTitle || 'Quiz'; }
+
+    function renderQuizSummary() {
+        const grid = document.getElementById('qsumGrid');
+        if (!_reportAttempts.length) {
+            grid.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:0.85rem;">Voce ainda nao jogou nenhum quiz.</div>';
+            return;
+        }
+        const byQuiz = {};
+        _reportAttempts.forEach(a => {
+            const id = quizKey(a);
+            if (!byQuiz[id]) byQuiz[id] = { title: a.quizTitle || 'Quiz', category: a.category || '', plays: 0, sumPct: 0, best: 0 };
+            const p = pctOf(a);
+            byQuiz[id].plays++;
+            byQuiz[id].sumPct += p;
+            if (p > byQuiz[id].best) byQuiz[id].best = p;
+        });
+        grid.innerHTML = Object.values(byQuiz).map(q => {
+            const avg = Math.round(q.sumPct / q.plays);
+            return `<div class="qsum-card">
+                <div class="qsum-cat">${esc(q.category) || 'Geral'}</div>
+                <h4>${esc(q.title)}</h4>
+                <div class="qsum-stats">
+                    <div><div class="v">${q.plays}</div><div class="l">Jogadas</div></div>
+                    <div><div class="v">${avg}%</div><div class="l">Media</div></div>
+                    <div><div class="v">${q.best}%</div><div class="l">Melhor</div></div>
+                </div>
+                <div class="qsum-bar"><span style="width:${avg}%;background:${barColor(avg)}"></span></div>
+            </div>`;
+        }).join('');
+    }
+
+    function populateReportFilter() {
+        const sel = document.getElementById('reportFilter');
+        const seen = new Map();
+        _reportAttempts.forEach(a => { const k = quizKey(a); if (!seen.has(k)) seen.set(k, a.quizTitle || 'Quiz'); });
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">Todos os quizzes</option>' +
+            [...seen.entries()].map(([id, t]) => `<option value="${esc(String(id))}">${esc(t)}</option>`).join('');
+        sel.value = cur;
+    }
+
+    function renderReportRows(filterKey) {
+        const tbody = document.getElementById('reportsBody');
+        let rows = _reportAttempts;
+        if (filterKey) rows = rows.filter(a => String(quizKey(a)) === String(filterKey));
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:rgba(255,255,255,0.3);">Voce ainda nao jogou nenhum quiz</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.slice(0, 50).map(a => {
+            const p = pctOf(a);
+            return `<tr>
+                <td>${esc(a.quizTitle || 'Quiz')}</td>
+                <td>${a.correctAnswers || 0}/${a.totalQuestions || 0}</td>
+                <td><span class="badge ${pctClass(p)}">${p}%</span></td>
+                <td>${fmtDateTime(a.completedAt)}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function exportReportsCsv() {
+        if (!_reportAttempts.length) return;
+        const header = ['Quiz', 'Acertos', 'Total', 'Aproveitamento', 'Data'];
+        const lines = _reportAttempts.map(a => {
+            const p = pctOf(a);
+            return [a.quizTitle || 'Quiz', a.correctAnswers || 0, a.totalQuestions || 0, p + '%', fmtDateTime(a.completedAt)]
+                .map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',');
+        });
+        const csv = '﻿' + [header.join(','), ...lines].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'meus-resultados.csv';
+        link.click();
+        URL.revokeObjectURL(url);
     }
     </script>
 </body>
